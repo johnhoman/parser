@@ -9,11 +9,6 @@ import (
 
 var SyntaxError = errors.New("syntax error")
 
-type NumericLiteral struct {
-    Type string
-    Value int
-}
-
 type Program struct {
     Type string
     Body interface{}
@@ -24,13 +19,24 @@ type Parser interface {
     Parse(s string) Program
 
     // Program
-    //   ; NumericLiteral
+    //   ; Literal
     //   ;
     Program() Program
-    // NumericLiteral
+
+    // Literal
+    //   ; StringLiteral
+    //   ; NumericLiteral
+    //   ;
+    Literal() Literal
+
+    // StringLiteral
+    //   ; string
+    StringLiteral() *StringLiteral
+
+    // IntLiteral
     //   ; int
     //   ;
-    NumericLiteral() NumericLiteral
+    IntLiteral() *IntLiteral
 }
 
 type parser struct {
@@ -48,11 +54,11 @@ func (p *parser) Parse(s string) Program {
 func (p *parser) Program() Program {
     return Program{
         Type: "Program",
-        Body: p.NumericLiteral(),
+        Body: repr(p.Literal()),
     }
 }
 
-func (p *parser) eat(tokenType string) (Token, error) {
+func (p *parser) eat(tokenType LiteralType) (Token, error) {
     token := p.lookAhead
     if token.IsEmpty() {
         return token, SyntaxError
@@ -61,10 +67,23 @@ func (p *parser) eat(tokenType string) (Token, error) {
     return token, nil
 }
 
-func (p *parser) NumericLiteral() NumericLiteral {
-    token, _ := p.eat("NUMBER")
+func (p *parser) IntLiteral() *IntLiteral {
+    token, _ := p.eat(IntLiteralType)
     i, _ := strconv.Atoi(token.Value)
-    return NumericLiteral{"NumericLiteral", i}
+    return &IntLiteral{i}
+}
+
+func (p *parser) StringLiteral() *StringLiteral {
+    token, _ := p.eat(StringLiteralType)
+    return &StringLiteral{token.Value}
+}
+
+func (p *parser) Literal() Literal {
+    switch LiteralType(p.lookAhead.Type) {
+    case StringLiteralType: { return p.StringLiteral() }
+    case IntLiteralType: { return p.IntLiteral() }
+    default: { return nil }
+    }
 }
 
 var _ Parser = &parser{}
@@ -109,20 +128,32 @@ func (tok *tokenizer) NextToken() Token {
     }
     // Numbers
     str := tok.String.Slice(tok.cursor)
-    k := 0
-    numbers := make([]byte, 0)
-    for k < str.Len() {
-        if '0' <= str[k] && str[k] <= '9' {
-            numbers = append(numbers, str[k])
+    if '0' <= str[0] && str[0] <= '9' {
+        k := 0
+        integer := make([]byte, 0)
+        for k < str.Len() && '0' <= str[k] && str[k] <= '9' {
+            integer = append(integer, str[k])
             k++
-        } else {
-            break
+        }
+        tok.cursor += k
+        return Token{
+            Type: string(IntLiteralType),
+            Value: string(integer),
         }
     }
-    return Token{
-        Type: "NUMBER",
-        Value: string(numbers),
+    if str[0] == '"' {
+        k := 1
+        start := k
+        for k < str.Len() && str[k] != '"' {
+            k++
+        }
+        tok.cursor += k + 1
+        return Token{
+            Type: string(StringLiteralType),
+            Value: string(str[start:k]),
+        }
     }
+    return Token{}
 }
 
 func NewTokenizer(s string) *tokenizer {

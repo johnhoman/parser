@@ -9,7 +9,7 @@ import (
 )
 
 func TestParser(t *testing.T) {
-    ast := parser.New().Parse(`42`)
+    ast := parser.New().Parse(`"string"`)
 
     encoded, _ := json.MarshalIndent(ast, "", "  ")
     fmt.Printf("%s\n", encoded)
