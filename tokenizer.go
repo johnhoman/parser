@@ -1,27 +1,56 @@
 package parser
 
 import (
-    "errors"
+    "fmt"
+    "regexp"
     "strconv"
 )
 
+var specs = map[string]LiteralType{
+    `(^\d+)`: IntLiteralType,
+    `^"([^"]*)"`: StringLiteralType,
+    `^\s+`: WhitespaceLiteral,
+    `^//.*`: CommentLiteral,
+    `^/\*[\s\S]*?\*/`: CommentLiteral,
+}
+
 // Lexical analysis
 
-var SyntaxError = errors.New("syntax error")
+type SyntaxError struct {
+    message string
+}
+
+func (err *SyntaxError) Error() string {
+    return err.message
+}
+
+func NewSyntaxError(message string) error {
+    return &SyntaxError{message}
+}
+
+type ExpressionStatement struct {}
+type StatementList []ExpressionStatement
+
 
 type Program struct {
     Type string
-    Body interface{}
+    Body StatementList
 }
 
 type Parser interface {
     // Parse parses a string into an abstract syntax tree (AST)
-    Parse(s string) Program
+    Parse(s string) (Program, error)
 
     // Program
-    //   ; Literal
+    //   ; StatementList
     //   ;
     Program() Program
+
+    // StatementList
+    //   : Statement
+    //   | StatementList Statement
+    //   ;
+    StatementList() StatementList
 
     // Literal
     //   ; StringLiteral
@@ -45,25 +74,33 @@ type parser struct {
 }
 
 // Parse the string s into an abstract syntax tree
-func (p *parser) Parse(s string) Program {
+func (p *parser) Parse(s string) (Program, error) {
     p.tokenizer = NewTokenizer(s)
-    p.lookAhead = p.tokenizer.NextToken()
-    return p.Program()
+    var err error
+    p.lookAhead, err = p.tokenizer.NextToken()
+    if err != nil {
+        return Program{}, err
+    }
+    return p.Program(), nil
 }
 
 func (p *parser) Program() Program {
     return Program{
         Type: "Program",
-        Body: repr(p.Literal()),
+        Body: p.Literal(),
     }
 }
 
 func (p *parser) eat(tokenType LiteralType) (Token, error) {
     token := p.lookAhead
     if token.IsEmpty() {
-        return token, SyntaxError
+        return token, NewSyntaxError("")
     }
-    p.lookAhead = p.tokenizer.NextToken()
+    var err error
+    p.lookAhead, err = p.tokenizer.NextToken()
+    if err != nil {
+        return Token{}, err
+    }
     return token, nil
 }
 
@@ -112,7 +149,7 @@ func (s String) Slice(start int) String {
 }
 
 type Tokenizer interface {
-    NextToken() Token
+    NextToken() (Token, error)
 }
 
 type tokenizer struct {
@@ -122,38 +159,27 @@ type tokenizer struct {
 
 func (tok *tokenizer) hasMoreTokens() bool { return tok.cursor < tok.String.Len() }
 
-func (tok *tokenizer) NextToken() Token {
+func (tok *tokenizer) NextToken() (Token, error) {
     if !tok.hasMoreTokens() {
-        return Token{}
+        return Token{}, nil
     }
-    // Numbers
-    str := tok.String.Slice(tok.cursor)
-    if '0' <= str[0] && str[0] <= '9' {
-        k := 0
-        integer := make([]byte, 0)
-        for k < str.Len() && '0' <= str[k] && str[k] <= '9' {
-            integer = append(integer, str[k])
-            k++
-        }
-        tok.cursor += k
-        return Token{
-            Type: string(IntLiteralType),
-            Value: string(integer),
-        }
-    }
-    if str[0] == '"' {
-        k := 1
-        start := k
-        for k < str.Len() && str[k] != '"' {
-            k++
-        }
-        tok.cursor += k + 1
-        return Token{
-            Type: string(StringLiteralType),
-            Value: string(str[start:k]),
+    for pattern, literalType := range specs {
+        str := string(tok.String.Slice(tok.cursor))
+
+        re := regexp.MustCompile(pattern)
+        if re.MatchString(str) {
+            match := re.FindStringSubmatch(str)
+            tok.cursor += len(match[0])
+            if literalType == WhitespaceLiteral {
+                return tok.NextToken()
+            }
+            if literalType == CommentLiteral {
+                return tok.NextToken()
+            }
+            return Token{Type: string(literalType), Value: match[1]}, nil
         }
     }
-    return Token{}
+    return Token{}, NewSyntaxError(fmt.Sprintf(`Unexpected token: %c`, tok.String[0]))
 }
 
 func NewTokenizer(s string) *tokenizer {
