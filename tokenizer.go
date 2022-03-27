@@ -12,6 +12,7 @@ var specs = map[string]LiteralType{
     `^\s+`: WhitespaceLiteral,
     `^//.*`: CommentLiteral,
     `^/\*[\s\S]*?\*/`: CommentLiteral,
+    `^;`: ExpressionTerm,
 }
 
 // Lexical analysis
@@ -28,9 +29,22 @@ func NewSyntaxError(message string) error {
     return &SyntaxError{message}
 }
 
-type ExpressionStatement struct {}
-type StatementList []ExpressionStatement
+type Expression struct {
+    Literal Literal
+}
 
+type ExpressionStatement struct {
+    Expression Expression
+}
+
+type Statement struct {
+    ExpressionStatement ExpressionStatement
+}
+
+type StatementList struct {
+    Statements []Statement
+    StatementList *StatementList
+}
 
 type Program struct {
     Type string
@@ -44,82 +58,140 @@ type Parser interface {
     // Program
     //   ; StatementList
     //   ;
-    Program() Program
+    Program() (Program, error)
 
     // StatementList
     //   : Statement
     //   | StatementList Statement
     //   ;
-    StatementList() StatementList
+    StatementList() (StatementList, error)
+
+    // Statement
+    //   : ExpressionStatement
+    //   ;
+    Statement() (Statement, error)
+
+    // ExpressionStatement
+    //   : Expression ;
+    //   ;
+    ExpressionStatement() (ExpressionStatement, error)
+
+    // Expression
+    //   : Literal
+    //   ;
+    Expression() (Expression, error)
 
     // Literal
-    //   ; StringLiteral
-    //   ; NumericLiteral
+    //   : StringLiteral
+    //   | NumericLiteral
     //   ;
-    Literal() Literal
+    Literal() (Literal, error)
 
     // StringLiteral
     //   ; string
-    StringLiteral() *StringLiteral
+    StringLiteral() (*StringLiteral, error)
 
     // IntLiteral
     //   ; int
     //   ;
-    IntLiteral() *IntLiteral
+    IntLiteral() (*IntLiteral, error)
 }
 
 type parser struct {
-    tokenizer Tokenizer
+    tokenizer *tokenizer
     lookAhead Token
 }
 
 // Parse the string s into an abstract syntax tree
 func (p *parser) Parse(s string) (Program, error) {
     p.tokenizer = NewTokenizer(s)
-    var err error
-    p.lookAhead, err = p.tokenizer.NextToken()
+    p.lookAhead, _ = p.tokenizer.NextToken()
+    return p.Program()
+}
+
+func (p *parser) Expression() (Expression, error) {
+    lit, err := p.Literal()
+    if err != nil {
+        return Expression{}, err
+    }
+    _, err = p.eat(ExpressionTerm)
+    if err != nil {
+        return Expression{}, err
+    }
+    return Expression{Literal: lit}, nil
+}
+
+func (p *parser) ExpressionStatement() (ExpressionStatement, error) {
+    expression, err := p.Expression()
+    if err != nil {
+        return ExpressionStatement{}, err
+    }
+    return ExpressionStatement{Expression: expression}, nil
+}
+
+func (p *parser) Statement() (Statement, error) {
+    expressionStatement, err := p.ExpressionStatement()
+    if err != nil {
+        return Statement{}, err
+    }
+    return Statement{ExpressionStatement: expressionStatement}, nil
+}
+
+func (p *parser) StatementList() (StatementList, error) {
+    statements := StatementList{}
+
+    for !p.lookAhead.IsEmpty() {
+        statement, err := p.Statement()
+        if err != nil {
+            return StatementList{}, err
+        }
+        statements.Statements = append(statements.Statements, statement)
+    }
+    return statements, nil
+}
+
+func (p *parser) Program() (Program, error) {
+    statements, err := p.StatementList()
     if err != nil {
         return Program{}, err
     }
-    return p.Program(), nil
-}
-
-func (p *parser) Program() Program {
-    return Program{
-        Type: "Program",
-        Body: p.Literal(),
-    }
+    return Program{Type: "Program", Body: statements}, nil
 }
 
 func (p *parser) eat(tokenType LiteralType) (Token, error) {
     token := p.lookAhead
     if token.IsEmpty() {
-        return token, NewSyntaxError("")
+        return token, NewSyntaxError("EOF")
     }
-    var err error
-    p.lookAhead, err = p.tokenizer.NextToken()
-    if err != nil {
-        return Token{}, err
+    if token.Type != string(tokenType) {
+        return token, NewSyntaxError(fmt.Sprintf("unexpected token: '%s'", token.Value))
     }
+    p.lookAhead, _ = p.tokenizer.NextToken()
     return token, nil
 }
 
-func (p *parser) IntLiteral() *IntLiteral {
-    token, _ := p.eat(IntLiteralType)
+func (p *parser) IntLiteral() (*IntLiteral, error) {
+    token, err := p.eat(IntLiteralType)
+    if err != nil {
+        return nil, err
+    }
     i, _ := strconv.Atoi(token.Value)
-    return &IntLiteral{i}
+    return &IntLiteral{i}, nil
 }
 
-func (p *parser) StringLiteral() *StringLiteral {
-    token, _ := p.eat(StringLiteralType)
-    return &StringLiteral{token.Value}
+func (p *parser) StringLiteral() (*StringLiteral, error) {
+    token, err := p.eat(StringLiteralType)
+    if err != nil {
+        return nil, err
+    }
+    return &StringLiteral{token.Value}, nil
 }
 
-func (p *parser) Literal() Literal {
+func (p *parser) Literal() (Literal, error) {
     switch LiteralType(p.lookAhead.Type) {
     case StringLiteralType: { return p.StringLiteral() }
     case IntLiteralType: { return p.IntLiteral() }
-    default: { return nil }
+    default: { return nil, NewSyntaxError(fmt.Sprintf("Invalid literal type %s", p.lookAhead.Type)) }
     }
 }
 
@@ -148,10 +220,6 @@ func (s String) Slice(start int) String {
     return s[start:]
 }
 
-type Tokenizer interface {
-    NextToken() (Token, error)
-}
-
 type tokenizer struct {
     String
     cursor int
@@ -175,6 +243,9 @@ func (tok *tokenizer) NextToken() (Token, error) {
             }
             if literalType == CommentLiteral {
                 return tok.NextToken()
+            }
+            if literalType == ExpressionTerm {
+                return Token{Type: string(literalType)}, nil
             }
             return Token{Type: string(literalType), Value: match[1]}, nil
         }

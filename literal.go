@@ -6,6 +6,7 @@ const (
     IntLiteralType    LiteralType = "INT_LITERAL"
     WhitespaceLiteral LiteralType = "WHITESPACE_LITERAL"
     CommentLiteral    LiteralType = "COMMENT_LITERAL"
+    ExpressionTerm    LiteralType = "EXPRESSION_TERM"
 )
 
 
