@@ -13,15 +13,15 @@ func TestParser_IntLiteral(t *testing.T) {
 	expected := 42
 	ast, err := parser.New().Parse(fmt.Sprintf(`%d;`, expected))
 	require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            ExpressionStatement: &parser.ExpressionStatement{
-                Expression: parser.Expression{
-                    Literal: parser.Literal{Value: 42},
-                },
-            }},
-        },
-    }
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			ExpressionStatement: &parser.ExpressionStatement{
+				Expression: parser.Expression{
+					Literal: &parser.Literal{Value: 42},
+				},
+			}},
+		},
+	}
 	require.Equal(t, ast.Body, expectedAst)
 }
 
@@ -29,58 +29,58 @@ func TestParser_IntMultiple(t *testing.T) {
 	expected1 := 42
 	expected2 := 43
 	ast, err := parser.New().Parse(fmt.Sprintf("%d;\n%d;", expected1, expected2))
-    require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{
-            {
-                ExpressionStatement: &parser.ExpressionStatement{
-                    Expression: parser.Expression{
-                        Literal: parser.Literal{Value: expected1},
-                    },
-                },
-            },
-            {
-                ExpressionStatement: &parser.ExpressionStatement{
-                    Expression: parser.Expression{
-                        Literal: parser.Literal{Value: expected2},
-                    },
-                },
-            },
-        },
-    }
-    require.Equal(t, ast.Body, expectedAst)
+	require.Nil(t, err)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{
+			{
+				ExpressionStatement: &parser.ExpressionStatement{
+					Expression: parser.Expression{
+						Literal: &parser.Literal{Value: expected1},
+					},
+				},
+			},
+			{
+				ExpressionStatement: &parser.ExpressionStatement{
+					Expression: parser.Expression{
+						Literal: &parser.Literal{Value: expected2},
+					},
+				},
+			},
+		},
+	}
+	require.Equal(t, ast.Body, expectedAst)
 }
 
 func TestParser_StringLiteral(t *testing.T) {
 	expected := "string literal"
 	ast, err := parser.New().Parse(fmt.Sprintf(`"%s";`, expected))
 	require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            ExpressionStatement: &parser.ExpressionStatement{
-                Expression: parser.Expression{
-                    Literal: parser.Literal{Value: "string literal"},
-                },
-            }},
-        },
-    }
-    require.Equal(t, ast.Body, expectedAst)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			ExpressionStatement: &parser.ExpressionStatement{
+				Expression: parser.Expression{
+					Literal: &parser.Literal{Value: "string literal"},
+				},
+			}},
+		},
+	}
+	require.Equal(t, ast.Body, expectedAst)
 }
 
 func TestParser_Whitespace(t *testing.T) {
 	expected := 42
 	ast, err := parser.New().Parse(fmt.Sprintf(`     %d;`, expected))
 	require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            ExpressionStatement: &parser.ExpressionStatement{
-                Expression: parser.Expression{
-                    Literal: parser.Literal{Value: 42},
-                },
-            }},
-        },
-    }
-    require.Equal(t, ast.Body, expectedAst)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			ExpressionStatement: &parser.ExpressionStatement{
+				Expression: parser.Expression{
+					Literal: &parser.Literal{Value: 42},
+				},
+			}},
+		},
+	}
+	require.Equal(t, ast.Body, expectedAst)
 }
 
 func TestParser_Comment(t *testing.T) {
@@ -92,69 +92,127 @@ func TestParser_Comment(t *testing.T) {
 	)
 	ast, err := parser.New().Parse(doc)
 	require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            ExpressionStatement: &parser.ExpressionStatement{
-                Expression: parser.Expression{
-                    Literal: parser.Literal{Value: 42},
-                },
-            }},
-        },
-    }
-    require.Equal(t, ast.Body, expectedAst)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			ExpressionStatement: &parser.ExpressionStatement{
+				Expression: parser.Expression{
+					Literal: &parser.Literal{Value: 42},
+				},
+			}},
+		},
+	}
+	require.Equal(t, ast.Body, expectedAst)
 }
 
 func TestParser_BlockStatement(t *testing.T) {
-    expected := 42
-    doc := fmt.Sprintf(`{
+	expected := 42
+	doc := fmt.Sprintf(`{
   %d;
 }`, expected)
-    ast, err := parser.New().Parse(doc)
-    require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            BlockStatement: &parser.BlockStatement{
-                StatementList: parser.StatementList{Statements: []parser.Statement{{
-                    ExpressionStatement: &parser.ExpressionStatement{
-                        Expression: parser.Expression{
-                            Literal: parser.Literal{Value: expected},
-                        },
-                    },
-                }}},
-            },
-        }},
-    }
-    require.Equal(t, ast.Body, expectedAst)
+	ast, err := parser.New().Parse(doc)
+	require.Nil(t, err)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			BlockStatement: &parser.BlockStatement{
+				StatementList: parser.StatementList{Statements: []parser.Statement{{
+					ExpressionStatement: &parser.ExpressionStatement{
+						Expression: parser.Expression{
+							Literal: &parser.Literal{Value: expected},
+						},
+					},
+				}}},
+			},
+		}},
+	}
+	require.Equal(t, ast.Body, expectedAst)
 }
 
 func TestParser_BlockStatementNested(t *testing.T) {
-    expected := 42
-    doc := fmt.Sprintf(`{
+	expected := 42
+	doc := fmt.Sprintf(`{
   {42;}
   {}
 }`)
-    ast, err := parser.New().Parse(doc)
+	ast, err := parser.New().Parse(doc)
+	require.Nil(t, err)
+	expectedAst := parser.StatementList{
+		Statements: []parser.Statement{{
+			BlockStatement: &parser.BlockStatement{
+				StatementList: parser.StatementList{Statements: []parser.Statement{{
+					BlockStatement: &parser.BlockStatement{
+						StatementList: parser.StatementList{Statements: []parser.Statement{{
+							ExpressionStatement: &parser.ExpressionStatement{
+								Expression: parser.Expression{
+									Literal: &parser.Literal{Value: expected},
+								},
+							},
+						}}},
+					},
+				}, {
+					BlockStatement: &parser.BlockStatement{
+						StatementList: parser.StatementList{},
+					},
+				}}},
+			},
+		}},
+	}
+	require.Equal(t, ast.Body, expectedAst)
+}
+
+func TestParser_EmptyStatement(t *testing.T) {
+	ast, err := parser.New().Parse(";")
+	require.Nil(t, err)
+	require.Equal(t, ast.Body, parser.StatementList{Statements: []parser.Statement{{
+		EmptyStatement: &parser.EmptyStatement{},
+	}}})
+}
+
+func TestParser_BinaryExpression(t *testing.T) {
+	ast, err := parser.New().Parse("2 + 2;")
+	require.Nil(t, err)
+
+	require.Equal(t, ast.Body, parser.StatementList{Statements: []parser.Statement{{
+		ExpressionStatement: &parser.ExpressionStatement{
+			Expression: parser.Expression{
+				BinaryExpression: &parser.BinaryExpression{
+					Operator: parser.BinaryOpAdd,
+					Left: &parser.Expression{
+						Literal: &parser.Literal{Value: 2},
+					},
+					Right: &parser.Expression{
+						Literal: &parser.Literal{Value: 2},
+					},
+				},
+			},
+		},
+	}}})
+}
+
+func TestParser_BinaryExpressionChained(t *testing.T) {
+    ast, err := parser.New().Parse("2 + 2 + 3;")
     require.Nil(t, err)
-    expectedAst := parser.StatementList{
-        Statements: []parser.Statement{{
-            BlockStatement: &parser.BlockStatement{
-                StatementList: parser.StatementList{Statements: []parser.Statement{{
-                    BlockStatement: &parser.BlockStatement{
-                        StatementList: parser.StatementList{Statements: []parser.Statement{{
-                            ExpressionStatement: &parser.ExpressionStatement{
-                                Expression: parser.Expression{
-                                    Literal: parser.Literal{Value: expected},
-                                },
+
+    require.Equal(t, parser.StatementList{Statements: []parser.Statement{{
+        ExpressionStatement: &parser.ExpressionStatement{
+            Expression: parser.Expression{
+                BinaryExpression: &parser.BinaryExpression{
+                    Operator: parser.BinaryOpAdd,
+                    Left: &parser.Expression{
+                        BinaryExpression: &parser.BinaryExpression{
+                            Operator: parser.BinaryOpAdd,
+                            Left: &parser.Expression{
+                                Literal: &parser.Literal{Value: 2},
                             },
-                        }}},
+                            Right: &parser.Expression{
+                                Literal: &parser.Literal{Value: 2},
+                            },
+                        },
                     },
-                },{
-                    BlockStatement: &parser.BlockStatement{
-                        StatementList: parser.StatementList{},
+                    Right: &parser.Expression{
+                        Literal: &parser.Literal{Value: 3},
                     },
-                }}},
+                },
             },
-        }},
-    }
-    require.Equal(t, ast.Body, expectedAst)
+        },
+    }}}, ast.Body)
 }

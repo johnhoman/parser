@@ -7,6 +7,7 @@ import (
 )
 
 type TokenType int
+type BinaryOp  int
 
 const (
 	IntegerLiteralRegex      = `(^\d+)`
@@ -15,34 +16,50 @@ const (
 	CommentRegex             = `^//.*`
 	BlockCommentRegex        = `^/\*[\s\S]*?\*/`
 	TerminateExpressionRegex = `^;`
-	BlockStatementRegex      = `^{`
+	BlockStatementBeginRegex = `^{`
 	BlockStatementEndRegex   = `^}`
+    BinaryOpRegex            = `^(\+|\-)`
+    BinaryOpAddRegex         = `^(\+)`
 
 	IntegerLiteralToken TokenType = iota + 1
 	StringLiteralToken
 	NullToken
 	TerminateLiteralToken
-	BlockStatementToken
+	BlockStatementBeginToken
 	BlockStatementEndToken
+    BinaryOpAddToken
+
+    BinaryOpAdd BinaryOp = iota + 1
 )
 
-func (tt TokenType) String() string {
-    switch tt {
-    case IntegerLiteralToken:
-        return "IntegerLiteral"
-    case StringLiteralToken:
-        return "StringLiteral"
-    case NullToken:
-        return "Null"
-    case TerminateLiteralToken:
-        return "TerminateExpression"
-    case BlockStatementToken:
-        return "BlockStatementStart"
-    case BlockStatementEndToken:
-        return "BlockStatementEnd"
-    default:
-        return fmt.Sprintf("%d", int(tt))
+var binaryOperations = map[TokenType]BinaryOp{
+    BinaryOpAddToken: BinaryOpAdd,
+}
+
+func isBinaryOp(tokenType TokenType) bool {
+    if _, ok := binaryOperations[tokenType]; ok {
+        return true
     }
+    return false
+}
+
+func (tt TokenType) String() string {
+	switch tt {
+	case IntegerLiteralToken:
+		return "IntegerLiteral"
+	case StringLiteralToken:
+		return "StringLiteral"
+	case NullToken:
+		return "Null"
+	case TerminateLiteralToken:
+		return "TerminateExpression"
+	case BlockStatementBeginToken:
+		return "BlockStatementBegin"
+	case BlockStatementEndToken:
+		return "BlockStatementEnd"
+	default:
+		return fmt.Sprintf("%d", int(tt))
+	}
 }
 
 var specs = map[string]TokenType{
@@ -52,8 +69,9 @@ var specs = map[string]TokenType{
 	CommentRegex:             NullToken,
 	BlockCommentRegex:        NullToken,
 	TerminateExpressionRegex: TerminateLiteralToken,
-	BlockStatementRegex:      BlockStatementToken,
+	BlockStatementBeginRegex: BlockStatementBeginToken,
 	BlockStatementEndRegex:   BlockStatementEndToken,
+    BinaryOpAddRegex:         BinaryOpAddToken,
 }
 
 // Lexical analysis
@@ -70,8 +88,15 @@ func NewSyntaxError(message string) error {
 	return &SyntaxError{message}
 }
 
+type BinaryExpression struct {
+	Operator BinaryOp
+	Left     *Expression
+	Right    *Expression
+}
+
 type Expression struct {
-	Literal Literal
+	Literal          *Literal
+	BinaryExpression *BinaryExpression
 }
 
 type ExpressionStatement struct {
@@ -82,9 +107,12 @@ type BlockStatement struct {
 	StatementList StatementList
 }
 
+type EmptyStatement struct{}
+
 type Statement struct {
 	ExpressionStatement *ExpressionStatement
 	BlockStatement      *BlockStatement
+	EmptyStatement      *EmptyStatement
 }
 
 type StatementList struct {
@@ -128,6 +156,13 @@ type Parser interface {
 	//   ;
 	BlockStatement() (Statement, error)
 
+    // AdditiveExpression
+    //   : Literal
+    //   | AdditiveExpression ADDITIVE_EXPRESSION Literal
+    //   ;
+
+    AdditiveExpression() (Expression, error)
+
 	// Expression
 	//   : Literal
 	//   ;
@@ -153,15 +188,15 @@ func (p *parser) Parse(s string) (Program, error) {
 }
 
 func (p *parser) Expression() (Expression, error) {
-	lit, err := p.Literal()
-	if err != nil {
-		return Expression{}, err
-	}
+    expr, err := p.AdditiveExpression()
+    if err != nil {
+        return Expression{}, err
+    }
 	_, err = p.eat(TerminateLiteralToken)
 	if err != nil {
 		return Expression{}, err
 	}
-	return Expression{Literal: lit}, nil
+	return expr, nil
 }
 
 func (p *parser) ExpressionStatement() (Statement, error) {
@@ -175,10 +210,10 @@ func (p *parser) ExpressionStatement() (Statement, error) {
 }
 
 func (p *parser) BlockStatement() (Statement, error) {
-    _, err := p.eat(BlockStatementToken)
-    if err != nil {
-        return Statement{}, err
-    }
+	_, err := p.eat(BlockStatementBeginToken)
+	if err != nil {
+		return Statement{}, err
+	}
 	block := &BlockStatement{}
 	if p.lookAhead.Type != BlockStatementEndToken {
 		var err error
@@ -196,10 +231,20 @@ func (p *parser) BlockStatement() (Statement, error) {
 	return Statement{BlockStatement: block}, nil
 }
 
+func (p *parser) EmptyStatement() (Statement, error) {
+	_, err := p.eat(TerminateLiteralToken)
+	if err != nil {
+		return Statement{}, err
+	}
+	return Statement{EmptyStatement: &EmptyStatement{}}, nil
+}
+
 func (p *parser) Statement() (Statement, error) {
 	switch p.lookAhead.Type {
-	case BlockStatementToken:
+	case BlockStatementBeginToken:
 		return p.BlockStatement()
+	case TerminateLiteralToken:
+		return p.EmptyStatement()
 	default:
 		return p.ExpressionStatement()
 	}
@@ -234,11 +279,11 @@ func (p *parser) eat(tokenType TokenType) (Token, error) {
 	if token.Type != tokenType {
 		return token, NewSyntaxError(fmt.Sprintf("unexpected token: '%s'", token.Value))
 	}
-    var err error
+	var err error
 	p.lookAhead, err = p.tokenizer.NextToken()
-    if err != nil {
-        return Token{}, err
-    }
+	if err != nil {
+		return Token{}, err
+	}
 	return token, nil
 }
 
@@ -276,6 +321,34 @@ func (p *parser) Literal() (Literal, error) {
 	}
 }
 
+func (p *parser) AdditiveExpression() (Expression, error) {
+    lit, err := p.Literal()
+    if err != nil {
+        return Expression{}, err
+    }
+    left := Expression{Literal: &lit}
+
+    for isBinaryOp(p.lookAhead.Type) {
+        op, err := p.eat(p.lookAhead.Type)
+        if err != nil {
+            return Expression{}, err
+        }
+        right, err := p.Literal()
+        if err != nil {
+            return Expression{}, err
+        }
+        left = Expression{BinaryExpression: &BinaryExpression{
+            Operator: binaryOperations[op.Type],
+            Left: &Expression{
+                BinaryExpression: left.BinaryExpression,
+                Literal: left.Literal,
+            },
+            Right: &Expression{Literal: &right},
+        }}
+    }
+    return left, nil
+}
+
 var _ Parser = &parser{}
 
 func New() *parser {
@@ -309,11 +382,11 @@ type tokenizer struct {
 func (tok *tokenizer) hasMoreTokens() bool { return tok.cursor < tok.String.Len() }
 
 func (tok *tokenizer) NextToken() (Token, error) {
-    skip := map[TokenType]bool {
-        TerminateLiteralToken: false,
-        BlockStatementToken: false,
-        BlockStatementEndToken: false,
-    }
+	skip := map[TokenType]bool{
+		TerminateLiteralToken:    false,
+		BlockStatementBeginToken: false,
+		BlockStatementEndToken:   false,
+	}
 	if !tok.hasMoreTokens() {
 		return Token{}, nil
 	}
@@ -327,9 +400,9 @@ func (tok *tokenizer) NextToken() (Token, error) {
 			if literalType == NullToken {
 				return tok.NextToken()
 			}
-            if _, ok := skip[literalType]; ok {
-                return Token{Type: literalType}, nil
-            }
+			if _, ok := skip[literalType]; ok {
+				return Token{Type: literalType}, nil
+			}
 			return Token{Type: literalType, Value: match[1]}, nil
 		}
 	}
