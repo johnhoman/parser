@@ -1,4 +1,4 @@
-module parser
+module mitchlang
 
 go 1.17
 
