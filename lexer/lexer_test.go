@@ -2,8 +2,8 @@ package lexer_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"parser/lexer"
-	"parser/token"
+	"mitchlang/lexer"
+	"mitchlang/token"
 	"testing"
 )
 
@@ -25,9 +25,9 @@ func TestLexer_NextToken(t *testing.T) {
 	}
 	lex := lexer.New(input)
 
-	for k, test := range tests {
+	for _, test := range tests {
 		tok := lex.NextToken()
-		t.Run(test.expectedType, func(t *testing.T) {
+		t.Run(test.expectedType.String(), func(t *testing.T) {
 			require.Equal(t, test.expectedType, tok.Type)
 			require.Equal(t, test.expectedLiteral, tok.Literal)
 		})
