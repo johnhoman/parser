@@ -49,7 +49,6 @@ func TestParser_LetStatementError(t *testing.T) {
     input := `
 let x 5;
 `
-
     l := lexer.New(input)
     p := New(l)
 
