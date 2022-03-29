@@ -4,8 +4,8 @@ import "fmt"
 
 type Type string
 
-func (t Type) String()       string { return string(t) }
-func (t Type) Repr()         string { return t.String() }
+func (t Type) String() string { return string(t) }
+func (t Type) Repr() string   { return t.String() }
 
 const (
 	Illegal  Type = "ILLEGAL"
@@ -21,8 +21,8 @@ const (
 	LT       Type = "LESS_THAN"
 	GT       Type = "GREATER_THAN"
 
-	Eq       Type = "EQUAL"
-	NotEq    Type = "NOT_EQUAL"
+	Eq    Type = "EQUAL"
+	NotEq Type = "NOT_EQUAL"
 
 	Comma     Type = "COMMA"
 	SemiColon Type = "SEMI_COLON"
@@ -66,12 +66,12 @@ func New(t Type, literal ...byte) *Token {
 }
 
 var keywords = map[string]Type{
-	"fn":  Function,
-	"let": Let,
-	"true": True,
-	"false": False,
-	"if": If,
-	"else": Else,
+	"fn":     Function,
+	"let":    Let,
+	"true":   True,
+	"false":  False,
+	"if":     If,
+	"else":   Else,
 	"return": Return,
 }
 

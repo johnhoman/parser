@@ -83,10 +83,10 @@ if (5 < 10) {
 		{token.GT, ">"},
 		{token.Int, "5"},
 		// if (5 < 10) {
-	    // 	return true;
-	    // } else {
-	    // 	return false;
-	    // }
+		// 	return true;
+		// } else {
+		// 	return false;
+		// }
 		{token.If, "if"},
 		{token.LParen, "("},
 		{token.Int, "5"},
