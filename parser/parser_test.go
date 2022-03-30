@@ -114,25 +114,24 @@ func TestParser_IntegerLiteralExpression(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 
-	 program := p.ParseProgram()
-	 require.Len(t, program.Statements, 1)
-	 require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
-	 statement := program.Statements[0].(*ast.ExpressionStatement)
-	 require.Equal(t, statement.Token.Type, token.Int)
-	 require.Equal(t, statement.Token.Literal, "5")
-	 require.IsType(t, &ast.IntegerLiteral{}, statement.Expression)
-	 literal := statement.Expression.(*ast.IntegerLiteral)
-	 require.Equal(t, literal.Value, int64(5))
-	 require.Equal(t, literal.TokenLiteral(), "5")
+	program := p.ParseProgram()
+	require.Len(t, program.Statements, 1)
+	require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	require.Equal(t, statement.Token.Type, token.Int)
+	require.Equal(t, statement.Token.Literal, "5")
+	require.IsType(t, &ast.IntegerLiteral{}, statement.Expression)
+	literal := statement.Expression.(*ast.IntegerLiteral)
+	require.Equal(t, literal.Value, int64(5))
+	require.Equal(t, literal.TokenLiteral(), "5")
 }
-
 
 func TestParser_PrefixExpressions(t *testing.T) {
 	tests := []struct {
-		input string
-		operator string
+		input        string
+		operator     string
 		integerValue int64
-	} {
+	}{
 		{"!5", "!", 5},
 		{"-15", "-", 15},
 	}
@@ -154,5 +153,72 @@ func TestParser_PrefixExpressions(t *testing.T) {
 		integer := expression.Right.(*ast.IntegerLiteral)
 		require.Equal(t, tt.integerValue, integer.Value)
 		require.Equal(t, integer.TokenLiteral(), fmt.Sprintf("%d", integer.Value))
+	}
+}
+
+func TestParser_InfixExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		operator string
+		left     int64
+		right    int64
+	}{
+		{"5 + 5;", "+", 5, 5},
+		{"5 - 5;", "-", 5, 5},
+		{"5 * 5;", "*", 5, 5},
+		{"5 / 5;", "/", 5, 5},
+		{"5 > 5;", ">", 5, 5},
+		{"5 < 5;", "<", 5, 5},
+		{"5 == 5;", "==", 5, 5},
+		{"5 != 5;", "!=", 5, 5},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		require.Len(t, p.Errors(), 0)
+
+		require.Len(t, program.Statements, 1)
+		require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+		statement := program.Statements[0].(*ast.ExpressionStatement)
+		require.IsType(t, &ast.InfixExpression{}, statement.Expression)
+		expression := statement.Expression.(*ast.InfixExpression)
+		require.Equal(t, expression.String(), fmt.Sprintf("(%d %s %d)", tt.left, tt.operator, tt.right))
+		require.Equal(t, tt.operator, expression.Operator)
+		require.IsType(t, &ast.IntegerLiteral{}, expression.Left)
+		integerLeft := expression.Left.(*ast.IntegerLiteral)
+		require.IsType(t, &ast.IntegerLiteral{}, expression.Right)
+		require.Equal(t, tt.left, integerLeft.Value)
+		integerRight := expression.Right.(*ast.IntegerLiteral)
+		require.Equal(t, tt.right, integerRight.Value)
+	}
+}
+
+func TestParser_OperatorPrecedenceParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"-a * b", "((-a) * b)"},
+		{"!-a", "(!(-a))"},
+		{"a + b + c", "((a + b) + c)"},
+		{"a + b - c", "((a + b) - c)"},
+		{"a * b * c", "((a * b) * c)"},
+		{"a * b / c", "((a * b) / c)"},
+		{"a + b / c", "(a + (b / c))"},
+		{"a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"},
+		{"3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"},
+		{"5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"},
+		{"5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"},
+		{"3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		require.Equal(t, tt.expected, program.String())
 	}
 }
