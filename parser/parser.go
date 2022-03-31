@@ -133,6 +133,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	left := prefix()
+	if left == nil {
+		return nil
+	}
 	for !p.next.IsType(token.SemiColon) && precedence < p.peekPrecedence() {
 		infix := p.infixFuncs[p.next.Type]
 		if infix == nil {
@@ -140,6 +143,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		}
 		p.nextToken()
 		left = infix(left)
+		if left == nil {
+			return nil
+		}
 	}
 	return left
 }
@@ -215,13 +221,44 @@ func (p *Parser) parseInteger() ast.Expression {
 	return &ast.IntegerLiteral{Token: p.current, Value: v}
 }
 
+func (p *Parser) parseBoolean() ast.Expression {
+	if !p.current.IsType(token.True) && !p.current.IsType(token.False) {
+		p.errors = append(
+			p.errors,
+			fmt.Sprintf("unexpected token %#v", p.current),
+		)
+		return nil
+	}
+	if p.current.IsType(token.True) {
+		return &ast.Boolean{Token: p.current, Value: true}
+	}
+	return &ast.Boolean{Token: p.current, Value: false}
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(Lowest)
+	if exp == nil {
+		return nil
+	}
+	if !p.expectNext(token.RParen) {
+		return nil
+	}
+	return exp
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expression := &ast.PrefixExpression{
 		Token:    p.current,
 		Operator: p.current.Literal,
 	}
 	p.nextToken()
-	expression.Right = p.parseExpression(Prefix)
+	right := p.parseExpression(Prefix)
+	if right == nil {
+		return nil
+	}
+	expression.Right = right
 	return expression
 }
 
@@ -233,7 +270,11 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 	precedence := p.currentPrecedence()
 	p.nextToken()
-	expression.Right = p.parseExpression(precedence)
+	right := p.parseExpression(precedence)
+	if right == nil {
+		return nil
+	}
+	expression.Right = right
 	return expression
 }
 
@@ -247,6 +288,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.Int, p.parseInteger)
 	p.registerPrefix(token.Bang, p.parsePrefixExpression)
 	p.registerPrefix(token.Minus, p.parsePrefixExpression)
+	p.registerPrefix(token.True, p.parseBoolean)
+	p.registerPrefix(token.False, p.parseBoolean)
+	p.registerPrefix(token.LParen, p.parseGroupedExpression)
 
 	p.infixFuncs = make(map[token.Type]infixFunc)
 	p.registerInfix(token.Plus, p.parseInfixExpression)
