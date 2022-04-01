@@ -4,17 +4,23 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+
 	"mitchlang/lexer"
 	"mitchlang/token"
 )
 
-const Prompt = ">> "
+var defaultPrompt = ">> "
+var prompt *string = &defaultPrompt
+
+func SetPrompt(s string) {
+	*prompt = s
+}
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
 	for {
-		_, _ = fmt.Fprintf(out, Prompt)
+		_, _ = fmt.Fprintf(out, *prompt)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
