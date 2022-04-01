@@ -10,7 +10,7 @@ import (
 )
 
 var defaultPrompt = ">> "
-var prompt *string = &defaultPrompt
+var prompt = &defaultPrompt
 
 func SetPrompt(s string) {
 	*prompt = s
