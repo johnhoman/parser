@@ -231,3 +231,29 @@ func TestParser_OperatorPrecedenceParsing(t *testing.T) {
 		require.Equal(t, tt.expected, program.String())
 	}
 }
+
+func TestParser_IfStatement(t *testing.T) {
+	tests := []struct {
+		input string
+	}{
+		{`if (1 > 2) { x }`},
+		{`if (1 > 2) { x } else { y }`},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkErrors(t, p.Errors())
+		require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+		expression := program.Statements[0].(*ast.ExpressionStatement)
+		require.Equal(t, expression.TokenLiteral(), "if")
+	}
+}
+
+func checkErrors(t *testing.T, errors []string) {
+	for _, err := range errors {
+		fmt.Println(fmt.Errorf(err))
+	}
+	require.Len(t, errors, 0)
+}

@@ -161,6 +161,21 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 	return stmt
 }
 
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.current}
+	block.Statements = []ast.Statement{}
+
+	p.nextToken()
+	for !p.current.IsType(token.RBrace) && !p.current.IsType(token.EOF) {
+		statement := p.parseStatement()
+		if statement != nil {
+			block.Statements = append(block.Statements, statement)
+		}
+		p.nextToken()
+	}
+	return block
+}
+
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.current.Type {
 	case token.Let:
@@ -278,6 +293,33 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{Token: p.current}
+
+	if !p.expectNext(token.LParen) {
+		return nil
+	}
+	p.nextToken()
+	expression.Condition = p.parseExpression(Lowest)
+	if !p.expectNext(token.RParen) {
+		return nil
+	}
+	if !p.expectNext(token.LBrace) {
+		return nil
+	}
+	expression.Consequence = p.parseBlockStatement()
+
+	if p.next.IsType(token.Else) {
+		p.nextToken()
+		if !p.expectNext(token.LBrace) {
+			return nil
+		}
+		expression.Alternative = p.parseBlockStatement()
+	}
+
+	return expression
+}
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 	p.nextToken()
@@ -291,6 +333,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.True, p.parseBoolean)
 	p.registerPrefix(token.False, p.parseBoolean)
 	p.registerPrefix(token.LParen, p.parseGroupedExpression)
+	p.registerPrefix(token.If, p.parseIfExpression)
 
 	p.infixFuncs = make(map[token.Type]infixFunc)
 	p.registerInfix(token.Plus, p.parseInfixExpression)
