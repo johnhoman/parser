@@ -28,10 +28,11 @@ let foobar = 838383;
 
 	tests := []struct {
 		expected string
+		expectedValue int64
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"x", 5},
+		{"y", 10},
+		{"foobar", 838383},
 	}
 
 	for k, test := range tests {
@@ -42,6 +43,9 @@ let foobar = 838383;
 			let := stmt.(*ast.LetStatement)
 			require.Equal(t, let.Name.Value, test.expected)
 			require.Equal(t, let.Name.TokenLiteral(), test.expected)
+			require.IsType(t, &ast.IntegerLiteral{}, let.Value)
+			lit := let.Value.(*ast.IntegerLiteral)
+			require.Equal(t, test.expectedValue, lit.Value)
 		})
 	}
 }
@@ -72,8 +76,8 @@ return 10;
 
 	program := p.ParseProgram()
 	require.NotNil(t, program)
+	checkErrors(t, p.Errors())
 	require.Len(t, program.Statements, 3)
-	require.Len(t, p.Errors(), 0, fmt.Sprintf("%#v", p.Errors()))
 
 	tests := []struct {
 		name string
@@ -276,6 +280,15 @@ func TestParser_FunctionLiteral(t *testing.T) {
 			`fn() {};`,
 			[]string{},
 			"",
+		},
+		{
+			`
+fn() {
+    let x = 10;
+    return x;
+};`,
+			[]string{},
+			"let x = 10;return x;",
 		},
 	}
 	for _, tt := range tests {

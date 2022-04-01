@@ -1,7 +1,5 @@
 package token
 
-import "fmt"
-
 type Type string
 
 func (t Type) String() string { return string(t) }
@@ -12,33 +10,33 @@ const (
 	EOF      Type = "EOF"
 	Ident    Type = "IDENTIFIER"
 	Int      Type = "INTEGER"
-	Assign   Type = "ASSIGN"
-	Plus     Type = "PLUS"
-	Minus    Type = "MINUS"
-	Bang     Type = "BANG"
-	Asterisk Type = "ASTERISK"
-	Slash    Type = "SLASH"
-	LT       Type = "LESS_THAN"
-	GT       Type = "GREATER_THAN"
+	Assign   Type = "="
+	Plus     Type = "+"
+	Minus    Type = "-"
+	Bang     Type = "!"
+	Asterisk Type = "*"
+	Slash    Type = "/"
+	LT       Type = "<"
+	GT       Type = ">"
 
-	Eq    Type = "EQUAL"
-	NotEq Type = "NOT_EQUAL"
+	Eq    Type = "="
+	NotEq Type = "!="
 
-	Comma     Type = "COMMA"
-	SemiColon Type = "SEMI_COLON"
+	Comma     Type = ","
+	SemiColon Type = ";"
 
-	LParen Type = "LEFT_PARENTHESIS"
-	RParen Type = "RIGHT_PARENTHESIS"
-	LBrace Type = "LEFT_BRACE"
-	RBrace Type = "RIGHT_BRACE"
+	LParen   Type = "("
+	RParen   Type = ")"
+	LBrace   Type = "{"
+	RBrace   Type = "}"
 
-	Function Type = "FUNCTION"
-	Let      Type = "LET"
-	True     Type = "TRUE"
-	False    Type = "FALSE"
-	If       Type = "IF"
-	Else     Type = "ELSE"
-	Return   Type = "RETURN"
+	Function Type = "fn"
+	Let      Type = "let"
+	True     Type = "true"
+	False    Type = "false"
+	If       Type = "if"
+	Else     Type = "else"
+	Return   Type = "return"
 )
 
 type Token struct {
@@ -49,7 +47,7 @@ type Token struct {
 func (t *Token) IsType(tt Type) bool { return t.Type == tt }
 
 func (t *Token) String() string {
-	return fmt.Sprintf(`%s("%s")`, t.Type, t.Literal)
+	return t.Literal
 }
 
 func NewFromString(t Type, literal string) *Token {

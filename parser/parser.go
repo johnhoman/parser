@@ -91,9 +91,17 @@ func (p *Parser) expectNext(tokenType token.Type) bool {
 	return true
 }
 
-func (p *Parser) parserReturnStatement() *ast.ReturnStatement {
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	statement := &ast.ReturnStatement{Token: p.current}
-	for !p.current.IsType(token.SemiColon) {
+	if !p.current.IsType(token.Return) {
+		// This would be some internal error because it should never
+		// get here
+		return nil
+	}
+	p.nextToken()
+
+	statement.ReturnValue = p.parseExpression(Lowest)
+	if p.next.IsType(token.SemiColon) {
 		p.nextToken()
 	}
 	return statement
@@ -114,7 +122,10 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	for !p.current.IsType(token.SemiColon) {
+	p.nextToken()
+	statement.Value = p.parseExpression(Lowest)
+	// TODO: should this be required?
+	if p.next.IsType(token.SemiColon) {
 		p.nextToken()
 	}
 	return statement
@@ -201,7 +212,7 @@ func (p *Parser) parseStatement() ast.Statement {
 		}
 		return nil
 	case token.Return:
-		if stmt := p.parserReturnStatement(); stmt != nil {
+		if stmt := p.parseReturnStatement(); stmt != nil {
 			return stmt
 		}
 		return nil
