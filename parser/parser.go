@@ -80,7 +80,7 @@ func (p *Parser) expectNext(tokenType token.Type) bool {
 			p.errors,
 			fmt.Sprintf(
 				"expected next token to be %s, got %s instead",
-				token.Assign,
+				tokenType,
 				p.next.Type,
 			),
 		)
@@ -320,6 +320,29 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseFunctionLiteralExpression() ast.Expression {
+	expression := &ast.FunctionLiteralExpression{Token: p.current}
+	expression.Parameters = []*ast.Identifier{}
+
+	if !p.expectNext(token.LParen) {
+		return nil
+	}
+	for !p.next.IsType(token.RParen) {
+		ident := &ast.Identifier{Token: p.current, Value: p.current.Literal}
+		expression.Parameters = append(expression.Parameters, ident)
+		p.nextToken()
+		if p.next.IsType(token.Comma) {
+			p.nextToken()
+		}
+	}
+	p.nextToken()
+	if !p.expectNext(token.LBrace) {
+		return nil
+	}
+	expression.Body = p.parseBlockStatement()
+	return expression
+}
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 	p.nextToken()
@@ -334,6 +357,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.False, p.parseBoolean)
 	p.registerPrefix(token.LParen, p.parseGroupedExpression)
 	p.registerPrefix(token.If, p.parseIfExpression)
+	p.registerPrefix(token.Function, p.parseFunctionLiteralExpression)
 
 	p.infixFuncs = make(map[token.Type]infixFunc)
 	p.registerInfix(token.Plus, p.parseInfixExpression)

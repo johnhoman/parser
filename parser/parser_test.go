@@ -251,6 +251,22 @@ func TestParser_IfStatement(t *testing.T) {
 	}
 }
 
+func TestParser_FunctionLiteral(t *testing.T) {
+	input := `fn(a, b, c) { return a + b + c; }`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkErrors(t, p.Errors())
+	require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+	expression := program.Statements[0].(*ast.ExpressionStatement)
+	require.IsType(t, &ast.FunctionLiteralExpression{}, expression.Expression)
+	functionLit := expression.Expression.(*ast.FunctionLiteralExpression)
+	require.Equal(t, "fn", functionLit.TokenLiteral())
+	require.Len(t, functionLit.Parameters, 3)
+	require.Equal(t, "{", functionLit.Body.TokenLiteral())
+	require.Len(t, functionLit.Body.Statements, 1)
+}
+
 func checkErrors(t *testing.T, errors []string) {
 	for _, err := range errors {
 		fmt.Println(fmt.Errorf(err))
