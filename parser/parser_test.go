@@ -221,6 +221,11 @@ func TestParser_OperatorPrecedenceParsing(t *testing.T) {
 		{"2 / (5 + 5)", "(2 / (5 + 5))"},
 		{"-(5 + 5)", "(-(5 + 5))"},
 		{"!(true == true)", "(!(true == true))"},
+		{"a + add(b * c) + d", "((a + add((b * c))) + d)"},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -253,10 +258,10 @@ func TestParser_IfStatement(t *testing.T) {
 
 func TestParser_FunctionLiteral(t *testing.T) {
 	tests := []struct {
-		input string
+		input               string
 		expectedIdentifiers []string
-		expectedBody string
-	} {
+		expectedBody        string
+	}{
 		{
 			`fn(a, b, c) { a + b + c; }`,
 			[]string{"a", "b", "c"},
@@ -267,8 +272,13 @@ func TestParser_FunctionLiteral(t *testing.T) {
 			[]string{},
 			"(1 + (2 * 3))",
 		},
+		{
+			`fn() {};`,
+			[]string{},
+			"",
+		},
 	}
-	for _, tt := range tests  {
+	for _, tt := range tests {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
@@ -288,6 +298,51 @@ func TestParser_FunctionLiteral(t *testing.T) {
 	}
 }
 
+func TestParser_CallFunction(t *testing.T) {
+	tests := []struct {
+		input               string
+		expectedFunction    string
+		expectedExpressions []string
+	}{
+		{
+			`fn(a, b, c) { a + b + c; }(1, 2, 3)`,
+			`fn(a, b, c) { ((a + b) + c) }`,
+			[]string{"1", "2", "3"},
+		},
+		{
+			`add(1, 2, 3)`,
+			"add",
+			[]string{"1", "2", "3"},
+		},
+		{
+			`sub()`,
+			"sub",
+			[]string{},
+		},
+		{
+			`fn() {}()`,
+			`fn() {  }`,
+			[]string{},
+		},
+	}
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkErrors(t, p.Errors())
+		require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+		expression := program.Statements[0].(*ast.ExpressionStatement)
+		require.IsType(t, &ast.CallExpression{}, expression.Expression)
+		callExpression := expression.Expression.(*ast.CallExpression)
+
+		args := make([]string, 0, len(callExpression.Arguments))
+		for _, arg := range callExpression.Arguments {
+			args = append(args, arg.String())
+		}
+		require.Equal(t, tt.expectedExpressions, args)
+		require.Equal(t, tt.expectedFunction, callExpression.Function.String())
+	}
+}
 func checkErrors(t *testing.T, errors []string) {
 	for _, err := range errors {
 		fmt.Println(fmt.Errorf(err))

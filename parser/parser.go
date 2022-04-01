@@ -29,6 +29,7 @@ var (
 		token.Minus:    Sum,
 		token.Slash:    Product,
 		token.Asterisk: Product,
+		token.LParen:   Call,
 	}
 )
 
@@ -117,6 +118,23 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		p.nextToken()
 	}
 	return statement
+}
+
+func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
+	call := &ast.CallExpression{Token: p.current, Function: left}
+	call.Arguments = []ast.Expression{}
+	p.nextToken()
+	for !p.current.IsType(token.RParen) {
+		arg := p.parseExpression(Lowest)
+		if arg != nil {
+			call.Arguments = append(call.Arguments, arg)
+		}
+		if p.next.IsType(token.Comma) {
+			p.nextToken()
+		}
+		p.nextToken()
+	}
+	return call
 }
 
 // parseExpression parses an expression
@@ -367,5 +385,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NotEq, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.LParen, p.parseCallExpression)
 	return p
 }
