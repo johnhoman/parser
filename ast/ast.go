@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"mitchlang/token"
+	"strings"
 )
 
 type Node interface {
@@ -212,14 +213,14 @@ func (fle *FunctionLiteralExpression) TokenLiteral() string { return fle.Token.L
 func (fle *FunctionLiteralExpression) String() string {
 	out := new(bytes.Buffer)
 
+	params := make([]string, 0, len(fle.Parameters))
+	for _, param := range fle.Parameters {
+		params = append(params, param.String())
+	}
+
 	out.WriteString(fle.TokenLiteral())
 	out.WriteString("(")
-	for k, ident := range fle.Parameters {
-		out.WriteString(ident.String())
-		if k < len(fle.Parameters) - 1 {
-			out.WriteString(", ")
-		}
-	}
+	out.WriteString(strings.Join(params, ", "))
 	out.WriteString(")")
 	out.WriteString(fle.Body.String())
 	return out.String()

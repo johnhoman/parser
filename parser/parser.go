@@ -92,7 +92,6 @@ func (p *Parser) expectNext(tokenType token.Type) bool {
 
 func (p *Parser) parserReturnStatement() *ast.ReturnStatement {
 	statement := &ast.ReturnStatement{Token: p.current}
-
 	for !p.current.IsType(token.SemiColon) {
 		p.nextToken()
 	}
@@ -327,15 +326,15 @@ func (p *Parser) parseFunctionLiteralExpression() ast.Expression {
 	if !p.expectNext(token.LParen) {
 		return nil
 	}
-	for !p.next.IsType(token.RParen) {
+	p.nextToken()
+	for !p.current.IsType(token.RParen) {
 		ident := &ast.Identifier{Token: p.current, Value: p.current.Literal}
 		expression.Parameters = append(expression.Parameters, ident)
-		p.nextToken()
 		if p.next.IsType(token.Comma) {
 			p.nextToken()
 		}
+		p.nextToken()
 	}
-	p.nextToken()
 	if !p.expectNext(token.LBrace) {
 		return nil
 	}

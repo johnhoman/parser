@@ -252,19 +252,40 @@ func TestParser_IfStatement(t *testing.T) {
 }
 
 func TestParser_FunctionLiteral(t *testing.T) {
-	input := `fn(a, b, c) { return a + b + c; }`
-	l := lexer.New(input)
-	p := New(l)
-	program := p.ParseProgram()
-	checkErrors(t, p.Errors())
-	require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
-	expression := program.Statements[0].(*ast.ExpressionStatement)
-	require.IsType(t, &ast.FunctionLiteralExpression{}, expression.Expression)
-	functionLit := expression.Expression.(*ast.FunctionLiteralExpression)
-	require.Equal(t, "fn", functionLit.TokenLiteral())
-	require.Len(t, functionLit.Parameters, 3)
-	require.Equal(t, "{", functionLit.Body.TokenLiteral())
-	require.Len(t, functionLit.Body.Statements, 1)
+	tests := []struct {
+		input string
+		expectedIdentifiers []string
+		expectedBody string
+	} {
+		{
+			`fn(a, b, c) { a + b + c; }`,
+			[]string{"a", "b", "c"},
+			"((a + b) + c)",
+		},
+		{
+			`fn() { 1 + 2 * 3; }`,
+			[]string{},
+			"(1 + (2 * 3))",
+		},
+	}
+	for _, tt := range tests  {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkErrors(t, p.Errors())
+		require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+		expression := program.Statements[0].(*ast.ExpressionStatement)
+		require.IsType(t, &ast.FunctionLiteralExpression{}, expression.Expression)
+		functionLit := expression.Expression.(*ast.FunctionLiteralExpression)
+		require.Equal(t, "fn", functionLit.TokenLiteral())
+
+		identifiers := make([]string, 0, len(functionLit.Parameters))
+		for _, ident := range functionLit.Parameters {
+			identifiers = append(identifiers, ident.Value)
+		}
+		require.Equal(t, tt.expectedIdentifiers, identifiers)
+		require.Equal(t, tt.expectedBody, functionLit.Body.String())
+	}
 }
 
 func checkErrors(t *testing.T, errors []string) {
