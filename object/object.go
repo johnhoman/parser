@@ -6,6 +6,7 @@ const (
 	TypeInteger Type = "INTEGER"
 	TypeBoolean Type = "BOOLEAN"
 	TypeNull    Type = "NULL"
+	TypeError   Type = "ERROR"
 )
 
 type Object interface {

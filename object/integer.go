@@ -54,3 +54,36 @@ func (i *Integer) Div(other Object) Object {
 	}
 	return i.div(o)
 }
+
+func (i *Integer) eq(o *Integer) *Boolean {
+	return newBoolean(i.Value == o.Value)
+}
+
+func (i *Integer) Eq(other Object) Object {
+	o, ok := other.(*Integer)
+	if !ok {
+		return nil
+	}
+	return i.eq(o)
+}
+
+func (i *Integer) NotEq(other Object) Object {
+	o, ok := other.(*Integer)
+	if !ok {
+		return nil
+	}
+	eq := i.eq(o)
+	return newBoolean(!eq.Value)
+}
+
+func (i *Integer) lt(o *Integer) *Boolean {
+	return newBoolean(i.Value < o.Value)
+}
+
+func (i *Integer) Lt(other Object) Object {
+	o, ok := other.(*Integer)
+	if !ok {
+		return nil
+	}
+	return i.lt(o)
+}

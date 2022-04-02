@@ -42,6 +42,22 @@ func TestEval_BooleanExpression(t *testing.T) {
 	}{
 		{"true", true},
 		{"false", false},
+		{"5 == 5", true},
+		{"5 == 10", false},
+		{"-5 == 12", false},
+		{"5 != 5", false},
+		{"5 != 10", true},
+		{"-5 != 12", true},
+		{"5 > 5", false},
+		{"5 < 10", true},
+		{"true == true", true},
+		{"true == false", false},
+		{"false == true", false},
+		{"false == false", true},
+		{"true != true", false},
+		{"true != false", true},
+		{"false != true", true},
+		{"false != false", false},
 	}
 
 	for _, subtest := range tests {
@@ -99,5 +115,35 @@ func TestEval_MinusPrefixOperator(t *testing.T) {
 		require.IsType(t, &object.Integer{}, evaluated)
 		integer := evaluated.(*object.Integer)
 		require.Equal(t, subtest.expected, integer.Value)
+	}
+}
+
+func TestEval_IfElseExpression(t *testing.T) {
+	tests := []struct {
+		input string
+		expected interface{}
+	} {
+		{"if (true) { 10 }", 10},
+		{"if (false) { 10 } else { 20 }", 20},
+		{"if (10 == 10) { 10 }", 10},
+		{"if (10 != 10) { 10 } else { 20 }", 20},
+		{"if (1 < 10) { 10 }", 10},
+		{"if (1 > 10) { 10 } else { 20 }", 20},
+		{"if (1 > 10) { 10 }", nil},
+	}
+
+	for _, subtest := range tests {
+		t.Run(subtest.input, func(t *testing.T) {
+			l := lexer.New(subtest.input)
+			p := parser.New(l)
+			evaluated := Eval(p.ParseProgram())
+			if subtest.expected == nil {
+				require.IsType(t, &object.Null{}, evaluated)
+			} else {
+				require.IsType(t, &object.Integer{}, evaluated)
+				integer := evaluated.(*object.Integer)
+				require.Equal(t, int64(subtest.expected.(int)), integer.Value)
+			}
+		})
 	}
 }

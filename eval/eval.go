@@ -6,9 +6,7 @@ import (
 )
 
 var (
-	TrueSingleton  = &object.Boolean{Value: true}
-	FalseSingleton = &object.Boolean{Value: false}
-	NullSingleton  = &object.Null{}
+	NullSingleton = &object.Null{}
 )
 
 func Eval(node ast.Node) object.Object {
@@ -19,6 +17,22 @@ func Eval(node ast.Node) object.Object {
 			result = Eval(statement)
 		}
 		return result
+	case *ast.BlockStatement:
+		var result object.Object
+		for _, statement := range n.Statements {
+			result = Eval(statement)
+		}
+		return result
+	case *ast.IfExpression:
+		condition := Eval(n.Condition)
+		if condition == object.True {
+			return Eval(n.Consequence)
+		} else {
+			if n.Alternative != nil {
+				return Eval(n.Alternative)
+			}
+			return NullSingleton
+		}
 	case *ast.InfixExpression:
 		left := Eval(n.Left)
 		right := Eval(n.Right)
@@ -32,21 +46,21 @@ func Eval(node ast.Node) object.Object {
 		return parsePrefixOperator(n.Operator, right)
 	case *ast.Boolean:
 		if n.Value {
-			return TrueSingleton
+			return object.True
 		}
-		return FalseSingleton
+		return object.False
 	}
 	return nil
 }
 
 func parseBangOperator(right object.Object) object.Object {
 	switch right {
-	case TrueSingleton:
-		return FalseSingleton
-	case FalseSingleton:
-		return TrueSingleton
+	case object.True:
+		return object.False
+	case object.False:
+		return object.True
 	default:
-		return nil
+		return NullSingleton
 	}
 }
 
@@ -84,8 +98,16 @@ func evalInfixIntegerExpression(
 		binaryFunc = object.Mul
 	case "/":
 		binaryFunc = object.Div
+	case "==":
+		binaryFunc = object.Eq
+	case "!=":
+		binaryFunc = object.NotEq
+	case "<":
+		binaryFunc = object.Lt
+	case ">":
+		binaryFunc = object.Gt
 	default:
-		return nil
+		return NullSingleton
 	}
 	if binaryFunc != nil {
 		if val := binaryFunc(left, right); val != nil {
