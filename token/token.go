@@ -25,10 +25,10 @@ const (
 	Comma     Type = ","
 	SemiColon Type = ";"
 
-	LParen   Type = "("
-	RParen   Type = ")"
-	LBrace   Type = "{"
-	RBrace   Type = "}"
+	LParen Type = "("
+	RParen Type = ")"
+	LBrace Type = "{"
+	RBrace Type = "}"
 
 	Function Type = "fn"
 	Let      Type = "let"

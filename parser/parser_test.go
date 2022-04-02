@@ -27,7 +27,7 @@ let foobar = 838383;
 	require.Len(t, p.Errors(), 0, fmt.Sprintf("%#v", p.Errors()))
 
 	tests := []struct {
-		expected string
+		expected      string
 		expectedValue int64
 	}{
 		{"x", 5},
