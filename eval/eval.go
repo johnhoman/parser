@@ -12,17 +12,9 @@ var (
 func Eval(node ast.Node) object.Object {
 	switch n := node.(type) {
 	case *ast.Program:
-		var result object.Object
-		for _, statement := range n.Statements {
-			result = Eval(statement)
-		}
-		return result
+		return evalStatements(n.Statements)
 	case *ast.BlockStatement:
-		var result object.Object
-		for _, statement := range n.Statements {
-			result = Eval(statement)
-		}
-		return result
+		return evalBlockStatements(n.Statements)
 	case *ast.IfExpression:
 		condition := Eval(n.Condition)
 		if condition == object.True {
@@ -49,6 +41,8 @@ func Eval(node ast.Node) object.Object {
 			return object.True
 		}
 		return object.False
+	case *ast.ReturnStatement:
+		return &object.ReturnValue{Value: Eval(n.ReturnValue)}
 	}
 	return nil
 }
@@ -117,4 +111,26 @@ func evalInfixIntegerExpression(
 		//    support the operator
 	}
 	return nil
+}
+
+func evalStatements(statements []ast.Statement) object.Object {
+	var result object.Object
+	for _, statement := range statements {
+		result = Eval(statement)
+		if rv, ok := result.(*object.ReturnValue); ok {
+			return rv.Value
+		}
+	}
+	return result
+}
+
+func evalBlockStatements(statements []ast.Statement) object.Object {
+	var result object.Object
+	for _, statement := range statements {
+		result = Eval(statement)
+		if rv, ok := result.(*object.ReturnValue); ok {
+			return rv
+		}
+	}
+	return result
 }

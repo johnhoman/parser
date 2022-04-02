@@ -120,9 +120,9 @@ func TestEval_MinusPrefixOperator(t *testing.T) {
 
 func TestEval_IfElseExpression(t *testing.T) {
 	tests := []struct {
-		input string
+		input    string
 		expected interface{}
-	} {
+	}{
 		{"if (true) { 10 }", 10},
 		{"if (false) { 10 } else { 20 }", 20},
 		{"if (10 == 10) { 10 }", 10},
@@ -144,6 +144,62 @@ func TestEval_IfElseExpression(t *testing.T) {
 				integer := evaluated.(*object.Integer)
 				require.Equal(t, int64(subtest.expected.(int)), integer.Value)
 			}
+		})
+	}
+}
+
+func TestEval_ReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
+		{
+			`
+if (10 > 1) {
+    if (50 > 10) {
+        return 10;
+    }
+    return 1;
+}
+`,
+			10,
+		},
+		{
+			`
+if (10 > 1) {
+    if (5 > 10) {
+        return 10;
+    }
+    return 1;
+}
+`,
+			1,
+		},
+		{
+			`
+if (10 > 1) {
+    if (5 > 10) {
+        return 10;
+    } 
+}
+return 5;
+`,
+			5,
+		},
+	}
+
+		for _, subtest := range tests {
+		t.Run(subtest.input, func(t *testing.T) {
+			l := lexer.New(subtest.input)
+			p := parser.New(l)
+			evaluated := Eval(p.ParseProgram())
+			require.IsType(t, &object.Integer{}, evaluated)
+			integer := evaluated.(*object.Integer)
+			require.Equal(t, int64(subtest.expected.(int)), integer.Value)
 		})
 	}
 }
