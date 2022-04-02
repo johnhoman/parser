@@ -74,31 +74,25 @@ func evalInfixIntegerExpression(
 	left object.Object,
 	right object.Object,
 ) object.Object {
+	var binaryFunc object.BinaryOpFunc
 	switch operator {
 	case "+":
-		if sum := object.Add(left, right); sum != nil {
-			return sum
-		}
-		// TODO: error
-		return nil
+		binaryFunc = object.Add
 	case "-":
-		if sum := object.Sub(left, right); sum != nil {
-			return sum
-		}
-		// TODO: error
-		return nil
+		binaryFunc = object.Sub
 	case "*":
-		if product := object.Mul(left, right); product != nil {
-			return product
-		}
-		// TODO: error
-		return nil
+		binaryFunc = object.Mul
 	case "/":
-		if quo := object.Div(left, right); quo != nil {
-			return quo
-		}
-		// TODO: error
+		binaryFunc = object.Div
+	default:
 		return nil
+	}
+	if binaryFunc != nil {
+		if val := binaryFunc(left, right); val != nil {
+			return val
+		}
+		// TODO: track errors - nil means that the left type doesn't
+		//    support the operator
 	}
 	return nil
 }
