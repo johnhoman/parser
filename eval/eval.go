@@ -43,7 +43,7 @@ func Eval(node ast.Node) object.Object {
 		return &object.Integer{Value: n.Value}
 	case *ast.PrefixExpression:
 		right := Eval(n.Right)
-		return parsePrefixOperator(n.Operator, right)
+		return evalPrefixOperator(n.Operator, right)
 	case *ast.Boolean:
 		if n.Value {
 			return object.True
@@ -53,7 +53,7 @@ func Eval(node ast.Node) object.Object {
 	return nil
 }
 
-func parseBangOperator(right object.Object) object.Object {
+func evalBangOperator(right object.Object) object.Object {
 	switch right {
 	case object.True:
 		return object.False
@@ -64,7 +64,7 @@ func parseBangOperator(right object.Object) object.Object {
 	}
 }
 
-func parseMinusPrefixOperator(right object.Object) object.Object {
+func evalMinusPrefixOperator(right object.Object) object.Object {
 	switch right := right.(type) {
 	case *object.Integer:
 		return &object.Integer{Value: 0 - right.Value}
@@ -72,12 +72,12 @@ func parseMinusPrefixOperator(right object.Object) object.Object {
 	return nil
 }
 
-func parsePrefixOperator(operator string, right object.Object) object.Object {
+func evalPrefixOperator(operator string, right object.Object) object.Object {
 	switch operator {
 	case "!":
-		return parseBangOperator(right)
+		return evalBangOperator(right)
 	case "-":
-		return parseMinusPrefixOperator(right)
+		return evalMinusPrefixOperator(right)
 	default:
 		return nil
 	}
