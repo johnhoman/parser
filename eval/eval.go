@@ -74,12 +74,31 @@ func evalInfixIntegerExpression(
 	left object.Object,
 	right object.Object,
 ) object.Object {
-	if _, ok := left.(object.Numeric); !ok {
+	switch operator {
+	case "+":
+		if sum := object.Add(left, right); sum != nil {
+			return sum
+		}
+		// TODO: error
+		return nil
+	case "-":
+		if sum := object.Sub(left, right); sum != nil {
+			return sum
+		}
+		// TODO: error
+		return nil
+	case "*":
+		if product := object.Mul(left, right); product != nil {
+			return product
+		}
+		// TODO: error
+		return nil
+	case "/":
+		if quo := object.Div(left, right); quo != nil {
+			return quo
+		}
+		// TODO: error
 		return nil
 	}
-	binOp := object.BinaryOp(operator)
-	if binOp == nil {
-		return nil
-	}
-	return binOp(left, right)
+	return nil
 }

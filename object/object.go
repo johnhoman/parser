@@ -13,47 +13,15 @@ const (
 	TypeNull    Type = "NULL"
 )
 
-func BinaryOp(operator string) func(Object, Object) Object {
-    switch operator {
-    case "+":
-        return add
-    case "-":
-        return sub
-    case "*":
-        return mul
-    case "/":
-        return div
-    }
-    return nil
-}
-
-func add(obj1 Object, obj2 Object) Object {
-    return obj1.(Numeric).Add(obj2.(Object))
-}
-
-func sub(obj1 Object, obj2 Object) Object {
-    return obj1.(Numeric).Subtract(obj2.(Object))
-}
-
-func mul(obj1 Object, obj2 Object) Object {
-    return obj1.(Numeric).Multiply(obj2.(Object))
-}
-
-func div(obj1 Object, obj2 Object) Object {
-    return obj1.(Numeric).Divide(obj2.(Object))
-}
-
 type Object interface {
 	Type() Type
 	Inspect() string
 }
 
-type Numeric interface {
-	Add(Object) Object
-    Subtract(Object) Object
-    Multiply(Object) Object
-    Divide(Object) Object
-}
+type addend interface{ Add(Object) Object }
+type term interface{ Sub(Object) Object }
+type multiplier interface{ Mul(Object) Object }
+type dividend interface{ Div(Object) Object }
 
 type Integer struct {
 	Value int64
@@ -69,28 +37,28 @@ func (i *Integer) Add(other Object) Object {
 	}
 }
 
-func (i *Integer) Subtract(other Object) Object {
-    if o, ok := other.(*Integer); !ok {
-        return nil
-    } else {
-        return &Integer{Value: i.Value - o.Value}
-    }
+func (i *Integer) Sub(other Object) Object {
+	if o, ok := other.(*Integer); !ok {
+		return nil
+	} else {
+		return &Integer{Value: i.Value - o.Value}
+	}
 }
 
-func (i *Integer) Multiply(other Object) Object {
-    if o, ok := other.(*Integer); !ok {
-        return nil
-    } else {
-        return &Integer{Value: i.Value * o.Value}
-    }
+func (i *Integer) Mul(other Object) Object {
+	if o, ok := other.(*Integer); !ok {
+		return nil
+	} else {
+		return &Integer{Value: i.Value * o.Value}
+	}
 }
 
-func (i *Integer) Divide(other Object) Object {
-    if o, ok := other.(*Integer); !ok {
-        return nil
-    } else {
-        return &Integer{Value: i.Value / o.Value}
-    }
+func (i *Integer) Div(other Object) Object {
+	if o, ok := other.(*Integer); !ok {
+		return nil
+	} else {
+		return &Integer{Value: i.Value / o.Value}
+	}
 }
 
 type Boolean struct {
@@ -104,3 +72,46 @@ type Null struct{}
 
 func (n *Null) Inspect() string { return "null" }
 func (n *Null) Type() Type      { return TypeNull }
+
+func Add(obj1, obj2 Object) Object {
+	if _, ok := obj1.(addend); !ok {
+		return nil
+	}
+	if ans := obj1.(addend).Add(obj2); ans != nil {
+		return ans
+	}
+	return nil
+}
+
+func Sub(obj1, obj2 Object) Object {
+	term, ok := obj1.(term)
+	if !ok {
+		return nil
+	}
+	if diff := term.Sub(obj2); diff != nil {
+		return diff
+	}
+	return nil
+}
+
+func Mul(obj1, obj2 Object) Object {
+	multiplier, ok := obj1.(multiplier)
+	if !ok {
+		return nil
+	}
+	if product := multiplier.Mul(obj2); product != nil {
+		return product
+	}
+	return nil
+}
+
+func Div(obj1, obj2 Object) Object {
+	dividend, ok := obj1.(dividend)
+	if !ok {
+		return nil
+	}
+	if product := dividend.Div(obj2); product != nil {
+		return product
+	}
+	return nil
+}
