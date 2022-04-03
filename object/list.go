@@ -26,4 +26,12 @@ func (l *List) Inspect() string {
 	return out.String()
 }
 
+func (l *List) length() *Integer {
+	return &Integer{Value: int64(len(l.Values))}
+}
+
+func (l *List) Len() Object {
+	return l.length()
+}
+
 var _ Object = &List{}
