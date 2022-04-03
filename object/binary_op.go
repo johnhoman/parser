@@ -16,7 +16,6 @@ type comparable interface {
 
 type BinaryOpFunc func(ob1, ob2 Object) Object
 
-
 func strict(opFunc BinaryOpFunc, v interface{}, op string) BinaryOpFunc {
 	return func(ob1, ob2 Object) Object {
 

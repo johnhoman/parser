@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"mitchlang/object"
 
 	"mitchlang/eval"
 	"mitchlang/lexer"
@@ -19,6 +20,7 @@ func SetPrompt(s string) {
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnv()
 
 	for {
 		_, _ = fmt.Fprintf(out, *prompt)
@@ -35,7 +37,7 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors())
 			continue
 		}
-		obj := eval.Eval(program)
+		obj := eval.Eval(program, env)
 		if obj != nil {
 			_, _ = io.WriteString(out, obj.Inspect())
 			_, _ = io.WriteString(out, "\n")

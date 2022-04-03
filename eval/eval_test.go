@@ -2,14 +2,20 @@ package eval
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 
 	"mitchlang/lexer"
 	"mitchlang/object"
 	"mitchlang/parser"
 )
+
+func parseInput(in string) object.Object {
+	l := lexer.New(in)
+	p := parser.New(l)
+	env := object.NewEnv()
+	return Eval(p.ParseProgram(), env)
+}
 
 func TestEval_IntegerExpression(t *testing.T) {
 	tests := []struct {
@@ -26,10 +32,7 @@ func TestEval_IntegerExpression(t *testing.T) {
 	}
 
 	for _, subtest := range tests {
-		l := lexer.New(subtest.input)
-		p := parser.New(l)
-		program := p.ParseProgram()
-		obj := Eval(program)
+		obj := parseInput(subtest.input)
 		require.IsType(t, &object.Integer{}, obj)
 		integer := obj.(*object.Integer)
 		require.Equal(t, subtest.expected, integer.Value)
@@ -62,10 +65,7 @@ func TestEval_BooleanExpression(t *testing.T) {
 	}
 
 	for _, subtest := range tests {
-		l := lexer.New(subtest.input)
-		p := parser.New(l)
-		program := p.ParseProgram()
-		obj := Eval(program)
+		obj := parseInput(subtest.input)
 		require.IsType(t, &object.Boolean{}, obj)
 		boolean := obj.(*object.Boolean)
 		require.Equal(t, subtest.expected, boolean.Value)
@@ -85,13 +85,9 @@ func TestEval_BangOperator(t *testing.T) {
 	}
 
 	for _, subtest := range tests {
-		l := lexer.New(subtest.input)
-		p := parser.New(l)
-		program := p.ParseProgram()
-
-		evaluated := Eval(program)
-		require.IsType(t, &object.Boolean{}, evaluated)
-		boolean := evaluated.(*object.Boolean)
+		obj := parseInput(subtest.input)
+		require.IsType(t, &object.Boolean{}, obj)
+		boolean := obj.(*object.Boolean)
 		require.Equal(t, subtest.expected, boolean.Value)
 	}
 }
@@ -108,11 +104,7 @@ func TestEval_MinusPrefixOperator(t *testing.T) {
 	}
 
 	for _, subtest := range tests {
-		l := lexer.New(subtest.input)
-		p := parser.New(l)
-		program := p.ParseProgram()
-
-		evaluated := Eval(program)
+		evaluated := parseInput(subtest.input)
 		require.IsType(t, &object.Integer{}, evaluated)
 		integer := evaluated.(*object.Integer)
 		require.Equal(t, subtest.expected, integer.Value)
@@ -135,9 +127,7 @@ func TestEval_IfElseExpression(t *testing.T) {
 
 	for _, subtest := range tests {
 		t.Run(subtest.input, func(t *testing.T) {
-			l := lexer.New(subtest.input)
-			p := parser.New(l)
-			evaluated := Eval(p.ParseProgram())
+			evaluated := parseInput(subtest.input)
 			if subtest.expected == nil {
 				require.IsType(t, &object.Null{}, evaluated)
 			} else {
@@ -195,9 +185,7 @@ return 5;
 
 	for _, subtest := range tests {
 		t.Run(subtest.input, func(t *testing.T) {
-			l := lexer.New(subtest.input)
-			p := parser.New(l)
-			evaluated := Eval(p.ParseProgram())
+			evaluated := parseInput(subtest.input)
 			require.IsType(t, &object.Integer{}, evaluated)
 			integer := evaluated.(*object.Integer)
 			require.Equal(t, int64(subtest.expected.(int)), integer.Value)
@@ -234,16 +222,39 @@ func TestEval_ErrorHandling(t *testing.T) {
 			"if (true) { true + false }",
 			fmt.Sprintf("invalid operation: %s + %s", Bool, Bool),
 		},
+		{
+			"foobar",
+			"identifier not found: foobar",
+		},
 	}
 
 	for _, subtest := range tests {
 		t.Run(subtest.input, func(i *testing.T) {
-			l := lexer.New(subtest.input)
-			p := parser.New(l)
-			evaluated := Eval(p.ParseProgram())
+			evaluated := parseInput(subtest.input)
 			require.IsType(t, &object.Error{}, evaluated)
 			err := evaluated.(*object.Error)
 			require.Equal(t, subtest.expected, err.Inspect())
+		})
+	}
+}
+
+func TestEval_LetStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let a = 5; a;", 5},
+		{"let a = 5 * 5; a;", 25},
+		{"let a = 5; let b = a; b;", 5},
+		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+	}
+
+	for _, subtest := range tests {
+		t.Run(subtest.input, func(t *testing.T) {
+			evaluated := parseInput(subtest.input)
+			require.IsType(t, &object.Integer{}, evaluated)
+			integer := evaluated.(*object.Integer)
+			require.Equal(t, subtest.expected, integer.Value)
 		})
 	}
 }

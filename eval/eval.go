@@ -10,41 +10,41 @@ var (
 	NullSingleton = &object.Null{}
 )
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Env) object.Object {
 	switch n := node.(type) {
 	case *ast.Program:
-		return evalStatements(n.Statements)
+		return evalStatements(n.Statements, env)
 	case *ast.BlockStatement:
-		return evalBlockStatements(n.Statements)
+		return evalBlockStatements(n.Statements, env)
 	case *ast.IfExpression:
-		condition := Eval(n.Condition)
+		condition := Eval(n.Condition, env)
 		if isError(condition) {
 			return condition
 		}
 		if condition == object.True {
-			return Eval(n.Consequence)
+			return Eval(n.Consequence, env)
 		} else {
 			if n.Alternative != nil {
-				return Eval(n.Alternative)
+				return Eval(n.Alternative, env)
 			}
 			return NullSingleton
 		}
 	case *ast.InfixExpression:
-		left := Eval(n.Left)
+		left := Eval(n.Left, env)
 		if isError(left) {
 			return left
 		}
-		right := Eval(n.Right)
+		right := Eval(n.Right, env)
 		if isError(right) {
 			return right
 		}
 		return evalInfixIntegerExpression(n.Operator, left, right)
 	case *ast.ExpressionStatement:
-		return Eval(n.Expression)
+		return Eval(n.Expression, env)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: n.Value}
 	case *ast.PrefixExpression:
-		right := Eval(n.Right)
+		right := Eval(n.Right, env)
 		if isError(right) {
 			return right
 		}
@@ -55,7 +55,22 @@ func Eval(node ast.Node) object.Object {
 		}
 		return object.False
 	case *ast.ReturnStatement:
-		return &object.ReturnValue{Value: Eval(n.ReturnValue)}
+		return &object.ReturnValue{Value: Eval(n.ReturnValue, env)}
+	case *ast.LetStatement:
+		obj := Eval(n.Value, env)
+		if isError(obj) {
+			return obj
+		}
+		env.Set(n.Name.Value, obj)
+		return obj
+	case *ast.Identifier:
+		obj, ok := env.Get(n.Value)
+		if !ok {
+			return &object.Error{
+				Message: fmt.Sprintf("identifier not found: %s", n.Value),
+			}
+		}
+		return obj
 	}
 	return nil
 }
@@ -77,7 +92,7 @@ func evalMinusPrefixOperator(right object.Object) object.Object {
 		return &object.Integer{Value: 0 - right.Value}
 	default:
 		return &object.Error{
-		    Message: fmt.Sprintf("unknown operator: -%s", right.Type()),
+			Message: fmt.Sprintf("unknown operator: -%s", right.Type()),
 		}
 	}
 }
@@ -131,10 +146,10 @@ func evalInfixIntegerExpression(
 	return nil
 }
 
-func evalStatements(statements []ast.Statement) object.Object {
+func evalStatements(statements []ast.Statement, env *object.Env) object.Object {
 	var result object.Object
 	for _, statement := range statements {
-		result = Eval(statement)
+		result = Eval(statement, env)
 		if _, ok := result.(*object.Error); ok {
 			return result
 		}
@@ -145,10 +160,10 @@ func evalStatements(statements []ast.Statement) object.Object {
 	return result
 }
 
-func evalBlockStatements(statements []ast.Statement) object.Object {
+func evalBlockStatements(statements []ast.Statement, env *object.Env) object.Object {
 	var result object.Object
 	for _, statement := range statements {
-		result = Eval(statement)
+		result = Eval(statement, env)
 		switch result.(type) {
 		case *object.Error:
 			return result
@@ -161,7 +176,7 @@ func evalBlockStatements(statements []ast.Statement) object.Object {
 
 func isError(obj object.Object) bool {
 	if obj != nil {
-		if _, ok := obj.(*object.Error) ; ok {
+		if _, ok := obj.(*object.Error); ok {
 			return ok
 		}
 	}
