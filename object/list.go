@@ -17,7 +17,7 @@ func (l *List) Inspect() string {
 	values := make([]string, 0, len(l.Values))
 
 	for k := range l.Values {
-		values[k] = l.Values[k].Inspect()
+		values = append(values, l.Values[k].Inspect())
 	}
 	out := new(bytes.Buffer)
 	out.WriteString("[")
