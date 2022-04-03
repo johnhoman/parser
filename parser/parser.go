@@ -164,7 +164,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	if left == nil {
 		return nil
 	}
-	for !p.next.IsType(token.SemiColon) && precedence < p.peekPrecedence() {
+	for !p.next.IsType(token.Comma) && !p.next.IsType(token.SemiColon) && precedence < p.peekPrecedence() {
 		infix := p.infixFuncs[p.next.Type]
 		if infix == nil {
 			return left
@@ -378,6 +378,24 @@ func (p *Parser) parseFunctionLiteralExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseListExpression() ast.Expression {
+	expression := &ast.ListExpression{Token: p.current}
+	expression.Items = []ast.Expression{}
+
+	for !p.next.IsType(token.RBracket) && !p.next.IsType(token.EOF) {
+		p.nextToken()
+		item := p.parseExpression(Lowest)
+		if item != nil {
+			expression.Items = append(expression.Items, item)
+		}
+		if p.next.IsType(token.Comma) {
+			p.nextToken()
+		}
+	}
+	p.nextToken()
+	return expression
+}
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 	p.nextToken()
@@ -394,6 +412,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LParen, p.parseGroupedExpression)
 	p.registerPrefix(token.If, p.parseIfExpression)
 	p.registerPrefix(token.Function, p.parseFunctionLiteralExpression)
+	p.registerPrefix(token.LBracket, p.parseListExpression)
 
 	p.infixFuncs = make(map[token.Type]infixFunc)
 	p.registerInfix(token.Plus, p.parseInfixExpression)

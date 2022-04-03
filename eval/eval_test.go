@@ -14,6 +14,9 @@ func testParseInput(in string) object.Object {
 	l := lexer.New(in)
 	p := parser.New(l)
 	env := object.NewEnv()
+	for _, err := range p.Errors() {
+		fmt.Println(err)
+	}
 	return Eval(p.ParseProgram(), env)
 }
 
@@ -395,6 +398,14 @@ func testResult(t *testing.T, obj object.Object, expected interface{}) {
 		require.Equal(t, expected, obj.Value)
 	case *object.String:
 		require.Equal(t, expected, obj.Value)
+	case *object.List:
+		exp, ok := expected.([]interface{})
+		if !ok {
+			require.FailNow(t, "expected should be a list")
+		}
+		for k := range obj.Values {
+			testResult(t, obj.Values[k], exp[k])
+		}
 	default:
 		t.Fatalf("unknown type %T", obj)
 	}
@@ -405,6 +416,7 @@ func TestEval_Builtins(t *testing.T) {
 		input    string
 		expected interface{}
 	}{
+		{`[len(""), len("123456")]`, []interface{}{0, 6}},
 		{`len("string")`, 6},
 		{`len("")`, 0},
 	}

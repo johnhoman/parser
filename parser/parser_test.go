@@ -377,6 +377,38 @@ func TestParser_CallFunction(t *testing.T) {
 		require.Equal(t, tt.expectedFunction, callExpression.Function.String())
 	}
 }
+
+func TestParser_List(t *testing.T) {
+	tests := []struct {
+		input string
+		expected []interface{}
+	}{
+		{`[1]`, []interface{}{int64(1)}},
+		{`[1, "this"]`, []interface{}{int64(1), "this"}},
+		{`[1, "this", true]`, []interface{}{int64(1), "this", true}},
+	}
+
+	for _, subtest := range tests {
+		program := New(lexer.New(subtest.input)).ParseProgram()
+		expr := program.Statements[0].(*ast.ExpressionStatement)
+		items := expr.Expression.(*ast.ListExpression).Items
+		require.Equal(t, len(subtest.expected), len(items))
+
+		for k := range items {
+			switch obj := items[k].(type) {
+			case *ast.IntegerLiteral:
+				require.Equal(t, subtest.expected[k], obj.Value)
+			case *ast.Boolean:
+				require.Equal(t, subtest.expected[k], obj.Value)
+			case *ast.StringLiteral:
+				require.Equal(t, subtest.expected[k], obj.Value)
+			default:
+				require.FailNow(t, "unknown type %T", obj)
+			}
+		}
+	}
+}
+
 func checkErrors(t *testing.T, errors []string) {
 	for _, err := range errors {
 		fmt.Println(fmt.Errorf(err))

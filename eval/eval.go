@@ -119,6 +119,16 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 		default:
 			return &object.Error{Message: fmt.Sprintf("not a function %s", fn.Type())}
 		}
+	case *ast.ListExpression:
+		items := make([]object.Object, 0, len(n.Items))
+		for k := range n.Items {
+			item := Eval(n.Items[k], env)
+			if isError(item) {
+				return item
+			}
+			items = append(items, item)
+		}
+		return &object.List{Values: items}
 	}
 	return nil
 }
