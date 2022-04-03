@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -192,7 +193,7 @@ return 5;
 		},
 	}
 
-		for _, subtest := range tests {
+	for _, subtest := range tests {
 		t.Run(subtest.input, func(t *testing.T) {
 			l := lexer.New(subtest.input)
 			p := parser.New(l)
@@ -200,6 +201,49 @@ return 5;
 			require.IsType(t, &object.Integer{}, evaluated)
 			integer := evaluated.(*object.Integer)
 			require.Equal(t, int64(subtest.expected.(int)), integer.Value)
+		})
+	}
+}
+
+func TestEval_ErrorHandling(t *testing.T) {
+	var (
+		Bool = object.TypeBoolean
+		Int  = object.TypeInteger
+	)
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"5 + true",
+			fmt.Sprintf("type mismatch: %s + %s", Int, Bool),
+		},
+		{
+			"5 + true; 5",
+			fmt.Sprintf("type mismatch: %s + %s", Int, Bool),
+		},
+		{
+			"-true",
+			fmt.Sprintf("unknown operator: -%s", Bool),
+		},
+		{
+			"true + false",
+			fmt.Sprintf("invalid operation: %s + %s", Bool, Bool),
+		},
+		{
+			"if (true) { true + false }",
+			fmt.Sprintf("invalid operation: %s + %s", Bool, Bool),
+		},
+	}
+
+	for _, subtest := range tests {
+		t.Run(subtest.input, func(i *testing.T) {
+			l := lexer.New(subtest.input)
+			p := parser.New(l)
+			evaluated := Eval(p.ParseProgram())
+			require.IsType(t, &object.Error{}, evaluated)
+			err := evaluated.(*object.Error)
+			require.Equal(t, subtest.expected, err.Inspect())
 		})
 	}
 }

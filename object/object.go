@@ -3,8 +3,8 @@ package object
 type Type string
 
 const (
-	TypeInteger Type = "INTEGER"
-	TypeBoolean Type = "BOOLEAN"
+	TypeInteger Type = "int"
+	TypeBoolean Type = "bool"
 	TypeNull    Type = "NULL"
 	TypeError   Type = "ERROR"
 	TypeReturn  Type = "RETURN_VALUE"

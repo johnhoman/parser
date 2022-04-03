@@ -1,5 +1,10 @@
 package object
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type addend interface{ Add(Object) Object }
 type term interface{ Sub(Object) Object }
 type multiplier interface{ Mul(Object) Object }
@@ -12,8 +17,29 @@ type comparable interface {
 
 type BinaryOpFunc func(ob1, ob2 Object) Object
 
-func Add(obj1, obj2 Object) Object {
+
+func strict(opFunc BinaryOpFunc, v interface{}, op string) BinaryOpFunc {
+	return func(ob1, ob2 Object) Object {
+
+		t1 := ob1.Type()
+		t2 := ob2.Type()
+
+		inf := reflect.TypeOf(v).Elem()
+		if !reflect.TypeOf(ob1).Implements(inf) {
+			return &Error{
+				Message: fmt.Sprintf("invalid operation: %s %s %s", t1, op, t2),
+			}
+		}
+		if t1 != t2 {
+			return &Error{fmt.Sprintf("type mismatch: %s %s %s", t1, op, t2)}
+		}
+		return opFunc(ob1, ob2)
+	}
+}
+
+func add(obj1, obj2 Object) Object {
 	if _, ok := obj1.(addend); !ok {
+		// type error - obj1 does not support add
 		return nil
 	}
 	if ans := obj1.(addend).Add(obj2); ans != nil {
@@ -22,18 +48,21 @@ func Add(obj1, obj2 Object) Object {
 	return nil
 }
 
-func Sub(obj1, obj2 Object) Object {
-	term, ok := obj1.(term)
-	if !ok {
-		return nil
-	}
+// Add - adds two objects and returns the result. Only
+// objects of the same type can be added.
+var Add = strict(add, (*addend)(nil), "+")
+
+func sub(obj1, obj2 Object) Object {
+	term := obj1.(term)
 	if diff := term.Sub(obj2); diff != nil {
 		return diff
 	}
 	return nil
 }
 
-func Mul(obj1, obj2 Object) Object {
+var Sub = strict(sub, (*term)(nil), "-")
+
+func mul(obj1, obj2 Object) Object {
 	multiplier, ok := obj1.(multiplier)
 	if !ok {
 		return nil
@@ -44,7 +73,9 @@ func Mul(obj1, obj2 Object) Object {
 	return nil
 }
 
-func Div(obj1, obj2 Object) Object {
+var Mul = strict(mul, (*multiplier)(nil), "*")
+
+func div(obj1, obj2 Object) Object {
 	dividend, ok := obj1.(dividend)
 	if !ok {
 		return nil
@@ -55,7 +86,9 @@ func Div(obj1, obj2 Object) Object {
 	return nil
 }
 
-func Eq(obj1, obj2 Object) Object {
+var Div = strict(div, (*dividend)(nil), "/")
+
+func eq(obj1, obj2 Object) Object {
 	ob, ok := obj1.(comparable)
 	if !ok {
 		return nil
@@ -66,7 +99,9 @@ func Eq(obj1, obj2 Object) Object {
 	return nil
 }
 
-func NotEq(obj1, obj2 Object) Object {
+var Eq = strict(eq, (*comparable)(nil), "==")
+
+func notEq(obj1, obj2 Object) Object {
 	eq := Eq(obj1, obj2)
 	if eq == nil {
 		return nil
@@ -77,7 +112,9 @@ func NotEq(obj1, obj2 Object) Object {
 	return True
 }
 
-func Lt(obj1, obj2 Object) Object {
+var NotEq = strict(notEq, (*comparable)(nil), "!=")
+
+func lt(obj1, obj2 Object) Object {
 	ob, ok := obj1.(comparable)
 	if !ok {
 		return nil
@@ -89,7 +126,9 @@ func Lt(obj1, obj2 Object) Object {
 	return nil
 }
 
-func Gt(obj1, obj2 Object) Object {
+var Lt = strict(lt, (*comparable)(nil), "<")
+
+func gt(obj1, obj2 Object) Object {
 	lt := Lt(obj1, obj2)
 	eq := Eq(obj1, obj2)
 	if lt == nil || eq == nil {
@@ -100,3 +139,5 @@ func Gt(obj1, obj2 Object) Object {
 	}
 	return True
 }
+
+var Gt = strict(gt, (*comparable)(nil), ">")

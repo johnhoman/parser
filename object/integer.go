@@ -26,6 +26,7 @@ func (i *Integer) sub(other *Integer) *Integer {
 func (i *Integer) Sub(other Object) Object {
 	o, ok := other.(*Integer)
 	if !ok {
+		// TODO: I don't want the "-" exposed here
 		return nil
 	}
 	return i.sub(o)
@@ -38,6 +39,7 @@ func (i *Integer) mul(other *Integer) *Integer {
 func (i *Integer) Mul(other Object) Object {
 	o, ok := other.(*Integer)
 	if !ok {
+		// TODO: I don't want the "*" exposed here
 		return nil
 	}
 	return i.mul(o)
@@ -50,6 +52,7 @@ func (i *Integer) div(other *Integer) *Integer {
 func (i *Integer) Div(other Object) Object {
 	o, ok := other.(*Integer)
 	if !ok {
+		// TODO: I don't want the "/" exposed here
 		return nil
 	}
 	return i.div(o)

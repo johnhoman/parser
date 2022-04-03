@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"mitchlang/ast"
 	"mitchlang/object"
 )
@@ -62,8 +63,11 @@ func evalMinusPrefixOperator(right object.Object) object.Object {
 	switch right := right.(type) {
 	case *object.Integer:
 		return &object.Integer{Value: 0 - right.Value}
+	default:
+		return &object.Error{
+		    Message: fmt.Sprintf("unknown operator: -%s", right.Type()),
+		}
 	}
-	return nil
 }
 
 func evalPrefixOperator(operator string, right object.Object) object.Object {
@@ -104,11 +108,13 @@ func evalInfixIntegerExpression(
 		return NullSingleton
 	}
 	if binaryFunc != nil {
-		if val := binaryFunc(left, right); val != nil {
+		val := binaryFunc(left, right)
+		if e, ok := val.(*object.Error); ok {
+			return e
+		}
+		if val != nil {
 			return val
 		}
-		// TODO: track errors - nil means that the left type doesn't
-		//    support the operator
 	}
 	return nil
 }
@@ -117,6 +123,9 @@ func evalStatements(statements []ast.Statement) object.Object {
 	var result object.Object
 	for _, statement := range statements {
 		result = Eval(statement)
+		if _, ok := result.(*object.Error); ok {
+			return result
+		}
 		if rv, ok := result.(*object.ReturnValue); ok {
 			return rv.Value
 		}
@@ -128,8 +137,11 @@ func evalBlockStatements(statements []ast.Statement) object.Object {
 	var result object.Object
 	for _, statement := range statements {
 		result = Eval(statement)
-		if rv, ok := result.(*object.ReturnValue); ok {
-			return rv
+		switch result.(type) {
+		case *object.Error:
+			return result
+		case *object.ReturnValue:
+			return result
 		}
 	}
 	return result
