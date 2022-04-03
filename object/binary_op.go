@@ -125,16 +125,18 @@ func lt(obj1, obj2 Object) Object {
 
 var Lt = strict(lt, (*comparable)(nil), "<")
 
+func ltEq(obj1, obj2 Object) Object {
+	if Lt(obj1, obj2) == True || Eq(obj1, obj2) == True {
+		return True
+	}
+	return False
+}
+
 func gt(obj1, obj2 Object) Object {
-	lt := Lt(obj1, obj2)
-	eq := Eq(obj1, obj2)
-	if lt == nil || eq == nil {
-		return nil
+	if ltEq(obj1, obj2) == False {
+		return True
 	}
-	if lt == True || eq == True {
-		return False
-	}
-	return True
+	return False
 }
 
 var Gt = strict(gt, (*comparable)(nil), ">")

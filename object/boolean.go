@@ -27,12 +27,5 @@ func (b *Boolean) Eq(other Object) Object {
 
 func (b *Boolean) Lt(other Object) Object {
 	// This is wrong -- should raise an error
-	return False
-}
-
-func newBoolean(value bool) *Boolean {
-	if value == true {
-		return True
-	}
-	return False
+	return NewTypeError("boolean does not support < operator")
 }

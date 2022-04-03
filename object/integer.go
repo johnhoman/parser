@@ -59,7 +59,10 @@ func (i *Integer) Div(other Object) Object {
 }
 
 func (i *Integer) eq(o *Integer) *Boolean {
-	return newBoolean(i.Value == o.Value)
+	if i.Value == o.Value {
+		return True
+	}
+	return False
 }
 
 func (i *Integer) Eq(other Object) Object {
@@ -76,11 +79,17 @@ func (i *Integer) NotEq(other Object) Object {
 		return nil
 	}
 	eq := i.eq(o)
-	return newBoolean(!eq.Value)
+	if eq == True {
+		return False
+	}
+	return True
 }
 
 func (i *Integer) lt(o *Integer) *Boolean {
-	return newBoolean(i.Value < o.Value)
+	if i.Value < o.Value {
+		return True
+	}
+	return False
 }
 
 func (i *Integer) Lt(other Object) Object {
