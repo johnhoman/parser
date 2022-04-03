@@ -29,7 +29,7 @@ if (5 < 10) {
 10 != 9
 "foobar"
 "foo bar"
-[][]][[[]]
+[][]][[["a"],1]
 `
 
 	tests := []struct {
@@ -128,7 +128,10 @@ if (5 < 10) {
 		{token.LBracket, "["},
 		{token.LBracket, "["},
 		{token.LBracket, "["},
+		{token.String, "a"},
 		{token.RBracket, "]"},
+		{token.Comma, ","},
+		{token.Int, "1"},
 		{token.RBracket, "]"},
 		{token.EOF, ""},
 	}
