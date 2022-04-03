@@ -265,3 +265,23 @@ func (sl *StringLiteral) String() string {
 	out.WriteByte('"')
 	return out.String()
 }
+
+type ListExpression struct {
+	Token *token.Token
+	Items []Expression
+}
+
+func (sl *ListExpression) expressionNode()      {}
+func (sl *ListExpression) TokenLiteral() string { return sl.Token.Literal }
+func (sl *ListExpression) String() string {
+
+	items := make([]string, 0, len(sl.Items))
+	for _, item := range sl.Items {
+		items = append(items, item.String())
+	}
+	out := new(bytes.Buffer)
+	out.WriteByte('[')
+	out.WriteString(strings.Join(items, ", "))
+	out.WriteByte(']')
+	return out.String()
+}
