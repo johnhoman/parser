@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -26,12 +25,10 @@ func strict(opFunc BinaryOpFunc, v interface{}, op string) BinaryOpFunc {
 
 		inf := reflect.TypeOf(v).Elem()
 		if !reflect.TypeOf(ob1).Implements(inf) {
-			return &Error{
-				Message: fmt.Sprintf("invalid operation: %s %s %s", t1, op, t2),
-			}
+			return NewTypeError("invalid operation: %s %s %s", t1, op, t2)
 		}
 		if t1 != t2 {
-			return &Error{fmt.Sprintf("type mismatch: %s %s %s", t1, op, t2)}
+			return NewTypeError("type mismatch: %s %s %s", t1, op, t2)
 		}
 		return opFunc(ob1, ob2)
 	}
