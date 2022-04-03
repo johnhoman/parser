@@ -29,6 +29,7 @@ if (5 < 10) {
 10 != 9
 "foobar"
 "foo bar"
+[][]][[[]]
 `
 
 	tests := []struct {
@@ -118,6 +119,17 @@ if (5 < 10) {
 		// "foo bar"
 		{token.String, "foobar"},
 		{token.String, "foo bar"},
+		// [][]][[[]]
+		{token.LBracket, "["},
+		{token.RBracket, "]"},
+		{token.LBracket, "["},
+		{token.RBracket, "]"},
+		{token.RBracket, "]"},
+		{token.LBracket, "["},
+		{token.LBracket, "["},
+		{token.LBracket, "["},
+		{token.RBracket, "]"},
+		{token.RBracket, "]"},
 		{token.EOF, ""},
 	}
 	lex := lexer.New(input)

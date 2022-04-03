@@ -30,6 +30,8 @@ const (
 	RParen Type = ")"
 	LBrace Type = "{"
 	RBrace Type = "}"
+	LBracket Type = "["
+	RBracket Type = "]"
 
 	Function Type = "fn"
 	Let      Type = "let"
