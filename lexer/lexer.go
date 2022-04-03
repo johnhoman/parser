@@ -41,6 +41,13 @@ func (l *Lexer) readWhen(pred func(byte) bool) string {
 	return l.input[position:l.position]
 }
 
+func (l *Lexer) readString() string {
+	s := l.readWhen(func(b byte) bool {
+		return b != '"' && b != 0
+	})
+	return s
+}
+
 func (l *Lexer) readIdentifier() string {
 	return l.readWhen(isLetter)
 }
@@ -97,6 +104,9 @@ func (l *Lexer) NextToken() *token.Token {
 		tok = token.New(token.LBrace, l.ch)
 	case '}':
 		tok = token.New(token.RBrace, l.ch)
+	case '"':
+		l.readChar()
+		tok = token.NewFromString(token.String, l.readString())
 	case 0:
 		tok = token.New(token.EOF)
 	default:

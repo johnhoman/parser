@@ -264,6 +264,13 @@ func (p *Parser) parseInteger() ast.Expression {
 	return &ast.IntegerLiteral{Token: p.current, Value: v}
 }
 
+func (p *Parser) parseString() ast.Expression {
+	if !p.current.IsType(token.String) {
+		return nil
+	}
+	return &ast.StringLiteral{Token: p.current, Value: p.current.Literal}
+}
+
 func (p *Parser) parseBoolean() ast.Expression {
 	if !p.current.IsType(token.True) && !p.current.IsType(token.False) {
 		p.errors = append(
@@ -379,6 +386,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixFuncs = make(map[token.Type]prefixFunc)
 	p.registerPrefix(token.Ident, p.parseIdentifier)
 	p.registerPrefix(token.Int, p.parseInteger)
+	p.registerPrefix(token.String, p.parseString)
 	p.registerPrefix(token.Bang, p.parsePrefixExpression)
 	p.registerPrefix(token.Minus, p.parsePrefixExpression)
 	p.registerPrefix(token.True, p.parseBoolean)

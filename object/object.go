@@ -3,11 +3,14 @@ package object
 type Type string
 
 const (
-	TypeInteger Type = "int"
-	TypeBoolean Type = "bool"
-	TypeNull    Type = "NULL"
-	TypeError   Type = "ERROR"
-	TypeReturn  Type = "RETURN_VALUE"
+	TypeString   Type = "str"
+	TypeInteger  Type = "int"
+	TypeBoolean  Type = "bool"
+	TypeNull     Type = "NULL"
+	TypeError    Type = "ERROR"
+	TypeReturn   Type = "RETURN_VALUE"
+	TypeFunction Type = "FUNCTION"
+	TypeBuiltin  Type = "BUILTIN"
 )
 
 type Object interface {

@@ -10,6 +10,7 @@ const (
 	EOF      Type = "EOF"
 	Ident    Type = "IDENTIFIER"
 	Int      Type = "INTEGER"
+	String   Type = "STRING"
 	Assign   Type = "="
 	Plus     Type = "+"
 	Minus    Type = "-"

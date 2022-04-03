@@ -130,6 +130,27 @@ func TestParser_IntegerLiteralExpression(t *testing.T) {
 	require.Equal(t, literal.TokenLiteral(), "5")
 }
 
+func TestParser_StringLiteralExpression(t *testing.T) {
+	input := `"this is a string"`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	for _, err := range p.Errors() {
+		fmt.Println(err)
+	}
+	require.Len(t, program.Statements, 1)
+	require.IsType(t, &ast.ExpressionStatement{}, program.Statements[0])
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	require.Equal(t, statement.Token.Type, token.String)
+	require.Equal(t, statement.Token.Literal, "this is a string")
+	require.IsType(t, &ast.StringLiteral{}, statement.Expression)
+	literal := statement.Expression.(*ast.StringLiteral)
+	require.Equal(t, literal.Value, "this is a string")
+	require.Equal(t, literal.TokenLiteral(), "this is a string")
+}
+
 func TestParser_PrefixExpressions(t *testing.T) {
 	tests := []struct {
 		input        string

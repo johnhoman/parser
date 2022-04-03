@@ -27,6 +27,8 @@ if (5 < 10) {
 
 10 == 10
 10 != 9
+"foobar"
+"foo bar"
 `
 
 	tests := []struct {
@@ -112,6 +114,11 @@ if (5 < 10) {
 		{token.Int, "10"},
 		{token.NotEq, "!="},
 		{token.Int, "9"},
+		// "foobar"
+		// "foo bar"
+		{token.String, "foobar"},
+		{token.String, "foo bar"},
+		{token.EOF, ""},
 	}
 	lex := lexer.New(input)
 

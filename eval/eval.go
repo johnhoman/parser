@@ -10,6 +10,12 @@ var (
 	NullSingleton = &object.Null{}
 )
 
+var builtins = map[string]*object.Builtin{
+	"len":  {Fn: object.BuiltinLen},
+	"add":  {Fn: object.BuiltinAdd},
+	"exit": {Fn: object.BuiltinExit},
+}
+
 func Eval(node ast.Node, env *object.Env) object.Object {
 	switch n := node.(type) {
 	case *ast.Program:
@@ -43,6 +49,8 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 		return Eval(n.Expression, env)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: n.Value}
+	case *ast.StringLiteral:
+		return &object.String{Value: n.Value}
 	case *ast.PrefixExpression:
 		right := Eval(n.Right, env)
 		if isError(right) {
@@ -64,13 +72,53 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 		env.Set(n.Name.Value, obj)
 		return obj
 	case *ast.Identifier:
-		obj, ok := env.Get(n.Value)
-		if !ok {
-			return &object.Error{
-				Message: fmt.Sprintf("identifier not found: %s", n.Value),
-			}
+		if obj, ok := env.Get(n.Value); ok {
+			return obj
+		}
+		if obj, ok := builtins[n.Value]; ok {
+			return obj
+		}
+
+		return &object.Error{
+			Message: fmt.Sprintf("identifier not found: %s", n.Value),
+		}
+	case *ast.FunctionLiteralExpression:
+		obj := &object.Function{
+			Parameters: n.Parameters,
+			Body:       n.Body,
+			Env:        env,
 		}
 		return obj
+	case *ast.CallExpression:
+		obj := Eval(n.Function, env)
+		if isError(obj) {
+			return obj
+		}
+		args := make([]object.Object, 0, len(n.Arguments))
+		for _, exp := range n.Arguments {
+			out := Eval(exp, env)
+			if isError(out) {
+				return out
+			}
+			args = append(args, out)
+		}
+		switch fn := obj.(type) {
+		case *object.Builtin:
+			return fn.Fn(args...)
+		case *object.Function:
+			functionEnv := fn.Env.Push()
+			for k := range fn.Parameters {
+				functionEnv.Set(fn.Parameters[k].Value, args[k])
+			}
+			// Need to remove the variables from the environment
+			out := Eval(fn.Body, functionEnv)
+			if rv, ok := out.(*object.ReturnValue); ok {
+				return rv.Value
+			}
+			return out
+		default:
+			return &object.Error{Message: fmt.Sprintf("not a function %s", fn.Type())}
+		}
 	}
 	return nil
 }
