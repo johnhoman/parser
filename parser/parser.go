@@ -164,7 +164,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	if left == nil {
 		return nil
 	}
-	for !p.next.IsType(token.Comma) && !p.next.IsType(token.SemiColon) && precedence < p.peekPrecedence() {
+	for !p.next.IsType(token.SemiColon) && precedence < p.peekPrecedence() {
 		infix := p.infixFuncs[p.next.Type]
 		if infix == nil {
 			return left
@@ -382,8 +382,8 @@ func (p *Parser) parseListExpression() ast.Expression {
 	expression := &ast.ListExpression{Token: p.current}
 	expression.Items = []ast.Expression{}
 
-	for !p.next.IsType(token.RBracket) && !p.next.IsType(token.EOF) {
-		p.nextToken()
+	p.nextToken()
+	for !p.current.IsType(token.RBracket) && !p.next.IsType(token.EOF) {
 		item := p.parseExpression(Lowest)
 		if item != nil {
 			expression.Items = append(expression.Items, item)
@@ -391,8 +391,8 @@ func (p *Parser) parseListExpression() ast.Expression {
 		if p.next.IsType(token.Comma) {
 			p.nextToken()
 		}
+		p.nextToken()
 	}
-	p.nextToken()
 	return expression
 }
 
