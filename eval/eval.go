@@ -229,7 +229,8 @@ func evalBlockStatements(statements []ast.Statement, env *object.Env) object.Obj
 			return result
 		}
 	}
-	return result
+	// explicitly return value or null
+	return NullSingleton
 }
 
 func isError(obj object.Object) bool {

@@ -137,13 +137,13 @@ func TestEval_IfElseExpression(t *testing.T) {
 		input    string
 		expected interface{}
 	}{
-		{"if (true) { 10 }", 10},
-		{"if (false) { 10 } else { 20 }", 20},
-		{"if (10 == 10) { 10 }", 10},
-		{"if (10 != 10) { 10 } else { 20 }", 20},
-		{"if (1 < 10) { 10 }", 10},
-		{"if (1 > 10) { 10 } else { 20 }", 20},
-		{"if (1 > 10) { 10 }", nil},
+		{"if (true) { return 10; }", 10},
+		{"if (false) { return 10; } else { return 20; }", 20},
+		{"if (10 == 10) { return 10; }", 10},
+		{"if (10 != 10) { return 10; } else { return 20; }", 20},
+		{"if (1 < 10) { return 10; }", 10},
+		{"if (1 > 10) { return 10; } else { return 20; }", 20},
+		{"if (1 > 10) { return 10; }", nil},
 	}
 
 	for _, subtest := range tests {
@@ -315,18 +315,18 @@ let fib = fn(x) {
 		input    string
 		expected interface{}
 	}{
-		{"fn(x) { x + 2; }(2);", 4},
+		{"fn(x) { return x + 2; }(2);", 4},
 		{"let identity = fn(x) { return x; }; identity(2)", 2},
-		{"let double = fn(x) { x * 2; }; double(5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5, add(5, 5));", 15},
+		{"let double = fn(x) { return x * 2; }; double(5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5, 5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5, add(5, 5));", 15},
 		{fmt.Sprintf("%s; fib(0);", fib), 0},
 		{fmt.Sprintf("%s; fib(1);", fib), 1},
 		{fmt.Sprintf("%s; fib(2);", fib), 1},
 		{fmt.Sprintf("%s; fib(3);", fib), 2},
 		{fmt.Sprintf("%s; fib(4);", fib), 3},
 		{fmt.Sprintf("%s; fib(5);", fib), 5},
-		{`fn(x) { x }("string")`, "string"},
+		{`fn(x) { return x; }("string")`, "string"},
 	}
 
 	for _, subtest := range tests {
@@ -351,7 +351,7 @@ func TestEval_Closers(t *testing.T) {
 	}{
 		{`
 let newAddr = fn(x) {
-  return fn(y) {x + y};
+  return fn(y) { return x + y; };
 }
 
 let addTwo = newAddr(2);
@@ -367,7 +367,7 @@ let counter = fn(x) {
     return true;
   } else {
     let foobar = 9999;
-    counter(x + 1);
+    return counter(x + 1);
   }
 }
 counter(0);
