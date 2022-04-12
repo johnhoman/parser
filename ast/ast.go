@@ -285,3 +285,21 @@ func (sl *ListExpression) String() string {
 	out.WriteByte(']')
 	return out.String()
 }
+
+type IndexExpression struct {
+	Token *token.Token
+	Left Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode() {}
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IndexExpression) String() string {
+	out := new(bytes.Buffer)
+
+	out.WriteString(ie.Left.String())
+	out.WriteByte('[')
+	out.WriteString(ie.Index.String())
+	out.WriteByte(']')
+	return out.String()
+}

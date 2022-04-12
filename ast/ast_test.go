@@ -55,3 +55,41 @@ func TestProgram_List(t *testing.T) {
 	}
 	require.Equal(t, `[1, 2, "10", true]`, program.String())
 }
+
+
+func TestProgram_IndexExpression(t *testing.T) {
+	program := Program{
+		Statements: []Statement{
+			&ExpressionStatement{
+				Expression: &IndexExpression{
+					Left: &ListExpression{
+						Token: token.New(token.LBracket, '['),
+						Items: []Expression{
+							&IntegerLiteral{
+								Token: token.New(token.Int, '1'),
+								Value: 1,
+							},
+							&IntegerLiteral{
+								Token: token.New(token.Int, '2'),
+								Value: 2,
+							},
+							&StringLiteral{
+								Token: token.NewFromString(token.String, "10"),
+								Value: "10",
+							},
+							&Boolean{
+								Token: token.NewIdentifier("true"),
+								Value: true,
+							},
+						},
+					},
+					Index: &IntegerLiteral{
+						Token: token.NewFromString(token.Int, "22"),
+						Value: 22,
+					},
+				},
+			},
+		},
+	}
+	require.Equal(t, `[1, 2, "10", true][22]`, program.String())
+}
