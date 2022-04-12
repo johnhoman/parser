@@ -386,6 +386,7 @@ func TestParser_List(t *testing.T) {
 		{`[1]`, []interface{}{int64(1)}},
 		{`[1, "this"]`, []interface{}{int64(1), "this"}},
 		{`[1, "this", true]`, []interface{}{int64(1), "this", true}},
+		{`[1, 5 * 6, true]`, []interface{}{int64(1), []interface{}{int64(5), int64(6)}, true}},
 	}
 
 	for _, subtest := range tests {
@@ -402,8 +403,12 @@ func TestParser_List(t *testing.T) {
 				require.Equal(t, subtest.expected[k], obj.Value)
 			case *ast.StringLiteral:
 				require.Equal(t, subtest.expected[k], obj.Value)
+			case *ast.InfixExpression:
+				expected := subtest.expected[k].([]interface{})
+				require.Equal(t, expected[0], obj.Left.(*ast.IntegerLiteral).Value)
+				require.Equal(t, expected[1], obj.Right.(*ast.IntegerLiteral).Value)
 			default:
-				require.FailNow(t, "unknown type %T", obj)
+				require.FailNow(t, "failed", "unknown type %T", obj)
 			}
 		}
 	}
