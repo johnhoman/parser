@@ -17,6 +17,7 @@ const (
 	Product     // *
 	Prefix      // -X or !X
 	Call
+	Index
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 		token.Slash:    Product,
 		token.Asterisk: Product,
 		token.LParen:   Call,
+		token.LBracket: Index,
 	}
 )
 
@@ -396,6 +398,20 @@ func (p *Parser) parseListExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	expression := &ast.IndexExpression{Token: p.current}
+	expression.Left = left
+
+	p.nextToken()  // consume '['
+	expression.Index = p.parseExpression(Lowest)
+
+	if !p.expectNext(token.RBracket) {
+		return nil
+	}
+
+	return expression
+}
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
 	p.nextToken()
@@ -424,5 +440,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.LParen, p.parseCallExpression)
+	p.registerInfix(token.LBracket, p.parseIndexExpression)
 	return p
 }

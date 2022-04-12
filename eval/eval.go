@@ -129,6 +129,29 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			items = append(items, item)
 		}
 		return &object.List{Values: items}
+	case *ast.IndexExpression:
+		items := Eval(n.Left, env)
+		if isError(items) {
+			return items
+		}
+		rank := Eval(n.Index, env)
+		if isError(rank) {
+			return rank
+		}
+		integer, ok := rank.(*object.Integer)
+		if !ok {
+			return object.NewTypeError("expected integer, got %s", rank.Type())
+		}
+		index := int(integer.Value)
+		switch ob := items.(type) {
+		case *object.String:
+			return &object.String{Value: string(ob.Value[index])}
+		case *object.List:
+			return ob.Values[index]
+		default:
+			return object.NewTypeError("expected list or string, got %s", ob.Type())
+		}
+
 	}
 	return nil
 }

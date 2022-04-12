@@ -390,6 +390,46 @@ counter(0);
 	}
 }
 
+
+func TestEval_Builtins(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`[len(""), len("123456")]`, []interface{}{0, 6}},
+		{`len("string")`, 6},
+		{`len("")`, 0},
+	}
+
+	for _, subtest := range tests {
+		t.Run(subtest.input, func(t *testing.T) {
+			obj := testParseInput(subtest.input)
+			testResult(t, obj, subtest.expected)
+		})
+	}
+}
+
+func TestEval_IndexExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`[1][0]`, 1},
+		{`"string"[0]`, "s"},
+		{`[1, 2, 3, 4, 5][3]`, 4},
+		{`[1, 2, 3, 4, 5][3]`, 4},
+		{`[1, 2, 3, 4, 5][3*2/3]`, 3},
+		{`[1, 2, 3, 4, 5][fn(x){ return x; }(2)]`, 3},
+	}
+
+	for _, subtest := range tests {
+		t.Run(subtest.input, func(t *testing.T) {
+			obj := testParseInput(subtest.input)
+			testResult(t, obj, subtest.expected)
+		})
+	}
+}
+
 func testResult(t *testing.T, obj object.Object, expected interface{}) {
 	switch obj := obj.(type) {
 	case *object.Integer:
@@ -408,23 +448,5 @@ func testResult(t *testing.T, obj object.Object, expected interface{}) {
 		}
 	default:
 		t.Fatalf("unknown type %T", obj)
-	}
-}
-
-func TestEval_Builtins(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected interface{}
-	}{
-		{`[len(""), len("123456")]`, []interface{}{0, 6}},
-		{`len("string")`, 6},
-		{`len("")`, 0},
-	}
-
-	for _, subtest := range tests {
-		t.Run(subtest.input, func(t *testing.T) {
-			obj := testParseInput(subtest.input)
-			testResult(t, obj, subtest.expected)
-		})
 	}
 }
