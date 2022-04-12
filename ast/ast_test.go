@@ -91,5 +91,5 @@ func TestProgram_IndexExpression(t *testing.T) {
 			},
 		},
 	}
-	require.Equal(t, `[1, 2, "10", true][22]`, program.String())
+	require.Equal(t, `([1, 2, "10", true][22])`, program.String())
 }

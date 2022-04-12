@@ -399,8 +399,7 @@ func (p *Parser) parseListExpression() ast.Expression {
 }
 
 func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	expression := &ast.IndexExpression{Token: p.current}
-	expression.Left = left
+	expression := &ast.IndexExpression{Token: p.current, Left: left}
 
 	p.nextToken()  // consume '['
 	expression.Index = p.parseExpression(Lowest)

@@ -297,9 +297,11 @@ func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
 	out := new(bytes.Buffer)
 
+	out.WriteByte('(')
 	out.WriteString(ie.Left.String())
 	out.WriteByte('[')
 	out.WriteString(ie.Index.String())
 	out.WriteByte(']')
+	out.WriteByte(')')
 	return out.String()
 }
