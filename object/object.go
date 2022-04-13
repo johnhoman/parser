@@ -14,6 +14,8 @@ const (
 	TypeList     Type = "LIST"
 )
 
+func (t Type) String() string { return string(t) }
+
 type Object interface {
 	Type() Type
 	Inspect() string
