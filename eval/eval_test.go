@@ -420,6 +420,7 @@ func TestEval_IndexExpression(t *testing.T) {
 		{`[1, 2, 3, 4, 5][3]`, 4},
 		{`[1, 2, 3, 4, 5][3*2/3]`, 3},
 		{`[1, 2, 3, 4, 5][fn(x){ return x; }(2)]`, 3},
+		{`[1, 2, 3, 4, 5][6]`, "index out of range"},
 	}
 
 	for _, subtest := range tests {
@@ -438,6 +439,8 @@ func testResult(t *testing.T, obj object.Object, expected interface{}) {
 		require.Equal(t, expected, obj.Value)
 	case *object.String:
 		require.Equal(t, expected, obj.Value)
+	case *object.Error:
+		require.Contains(t, obj.Message, expected)
 	case *object.List:
 		exp, ok := expected.([]interface{})
 		if !ok {

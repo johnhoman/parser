@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mitchlang/ast"
 	"mitchlang/object"
+	"strings"
 )
 
 var (
@@ -143,6 +144,14 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			return object.NewTypeError("expected integer, got %s", rank.Type())
 		}
 		index := int(integer.Value)
+		length := object.BuiltinLen(items)
+		if index >= int(length.(*object.Integer).Value) {
+			typeString := strings.ToLower(items.Type().String())
+			return &object.Error{
+				ErrorType: "IndexError",
+				Message: fmt.Sprintf("%s index out of range", typeString),
+			}
+		}
 		switch ob := items.(type) {
 		case *object.String:
 			return &object.String{Value: string(ob.Value[index])}
