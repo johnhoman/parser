@@ -423,6 +423,7 @@ func TestEval_IndexExpression(t *testing.T) {
 		{`[1, 2, 3, 4, 5][6]`, "index out of range"},
 		{`let x = [1, 2, 3*4]; let y = 1; x[y + 1]`, 12},
 		{`[1, 2, 3, 4, 5]["6"]`, "expected integer, got str"},
+		{`"string"[len("string")-1]`, "g"},
 	}
 
 	for _, subtest := range tests {
