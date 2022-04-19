@@ -20,7 +20,7 @@ func (e *Error) Inspect() string {
 	if len(errorType) == 0 {
 		errorType = ErrorTypeException
 	}
-	return fmt.Sprintf("%s", e.Message)
+	return e.Message
 }
 
 var _ Object = &Error{}
