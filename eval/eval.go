@@ -15,6 +15,8 @@ var builtins = map[string]*object.Builtin{
 	"len":  {Fn: object.BuiltinLen},
 	"add":  {Fn: object.BuiltinAdd},
 	"exit": {Fn: object.BuiltinExit},
+	"list": {Fn: object.BuiltinList},
+	"print": {Fn: object.BuiltinPrintln},
 }
 
 func Eval(node ast.Node, env *object.Env) object.Object {

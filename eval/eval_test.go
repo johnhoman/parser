@@ -431,6 +431,7 @@ func TestEval_IndexExpression(t *testing.T) {
 		{`"string"[-5]`, "t"},
 		{`"string"[-6]`, "s"},
 		{`"string"[-7]`, "str index out of range"},
+		{`"string"[-7]`, "str index out of range"},
 	}
 
 	for _, subtest := range tests {
