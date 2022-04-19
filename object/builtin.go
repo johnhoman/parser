@@ -61,7 +61,7 @@ func BuiltinExit(args ...Object) Object {
 		code = int(i.Value)
 	}
 	os.Exit(code)
-	return &Null{}
+	return NullValue
 }
 
 func BuiltinList(args ...Object) Object {
@@ -86,14 +86,14 @@ func builtinPrint(args ...Object) Object {
 		s := args[0].Inspect()
 		_, _ = os.Stdout.WriteString(s)
 	}
-	return null
+	return NullValue
 }
 
 func BuiltinPrintln(args ...Object) Object {
 	obj := builtinPrint(args...)
-	if obj != null {
+	if obj != NullValue {
 		return obj
 	}
 	_, _ = io.WriteString(os.Stdout, "\n")
-	return null
+	return NullValue
 }

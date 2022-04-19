@@ -26,4 +26,4 @@ type Null struct{}
 func (n *Null) Inspect() string { return "null" }
 func (n *Null) Type() Type      { return TypeNull }
 
-var null = &Null{}
+var NullValue = &Null{}
