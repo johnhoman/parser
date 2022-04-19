@@ -142,8 +142,12 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			return object.NewTypeError("expected integer, got %s", rank.Type())
 		}
 		index := int(integer.Value)
-		length := object.BuiltinLen(items)
-		if index >= int(length.(*object.Integer).Value) {
+		length := int(object.BuiltinLen(items).(*object.Integer).Value)
+		if index < 0 {
+			index = length + index
+		}
+
+		if index >= length || index < 0 {
 			typeString := strings.ToLower(items.Type().String())
 			return &object.Error{
 				ErrorType: "IndexError",
