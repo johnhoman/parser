@@ -11,7 +11,7 @@ const (
 	TypeReturn   Type = "RETURN_VALUE"
 	TypeFunction Type = "FUNCTION"
 	TypeBuiltin  Type = "BUILTIN"
-	TypeList     Type = "LIST"
+	TypeList     Type = "List"
 )
 
 func (t Type) String() string { return string(t) }
