@@ -31,6 +31,7 @@ if (5 < 10) {
 "foo bar"
 [][]][[["a"],1]
 x.y = 1
+{"foo": 1, "bar": 2}
 `
 
 	tests := []struct {
@@ -140,6 +141,16 @@ x.y = 1
 		{token.Ident, "y"},
 		{token.Eq, "="},
 		{token.Int, "1"},
+		// {"foo": 1, "bar": 2}
+		{token.LBrace, "{"},
+		{token.String, "foo"},
+		{token.Colon, ":"},
+		{token.Int, "1"},
+		{token.Comma, ","},
+		{token.String, "bar"},
+		{token.Colon, ":"},
+		{token.Int, "2"},
+		{token.RBrace, "}"},
 		{token.EOF, ""},
 	}
 	lex := lexer.New(input)

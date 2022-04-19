@@ -25,6 +25,7 @@ const (
 
 	Comma     Type = ","
 	SemiColon Type = ";"
+	Colon     Type = ":"
 	Dot       Type = "."
 
 	LParen Type = "("
