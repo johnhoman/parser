@@ -15,13 +15,7 @@ type Error struct {
 }
 
 func (e *Error) Type() Type { return TypeError }
-func (e *Error) Inspect() string {
-	errorType := e.ErrorType
-	if len(errorType) == 0 {
-		errorType = ErrorTypeException
-	}
-	return e.Message
-}
+func (e *Error) Inspect() string { return e.Message }
 
 var _ Object = &Error{}
 
