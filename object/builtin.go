@@ -1,6 +1,10 @@
 package object
 
-import "os"
+import (
+	"fmt"
+	"io"
+	"os"
+)
 
 type BuiltinFunction func(args ...Object) Object
 
@@ -58,4 +62,38 @@ func BuiltinExit(args ...Object) Object {
 	}
 	os.Exit(code)
 	return &Null{}
+}
+
+func BuiltinList(args ...Object) Object {
+	if len(args) > 1 {
+		return NewTypeError("expected 1 positional argument but received %d", len(args))
+	}
+	if _, ok := args[0].(interface{ List() Object }); !ok {
+		return NewTypeError("object %s is not iterable", args[0].Type())
+	}
+	it := args[0].(interface{ List() Object })
+	return it.List()
+}
+
+func builtinPrint(args ...Object) Object {
+	if len(args) > 1 {
+		return NewTypeError("expected 1 positional arguments but received %d", len(args))
+	}
+	if _, ok := args[0].(fmt.Stringer); ok {
+		stringer := args[0].(fmt.Stringer)
+		_, _ = os.Stdout.WriteString(stringer.String())
+	} else {
+		s := args[0].Inspect()
+		_, _ = os.Stdout.WriteString(s)
+	}
+	return null
+}
+
+func BuiltinPrintln(args ...Object) Object {
+	obj := builtinPrint(args...)
+	if obj != null {
+		return obj
+	}
+	_, _ = io.WriteString(os.Stdout, "\n")
+	return null
 }
