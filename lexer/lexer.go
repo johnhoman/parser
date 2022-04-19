@@ -60,6 +60,12 @@ func (l *Lexer) readWhitespace() string {
 	return l.readWhen(isWhitespace)
 }
 
+func (l *Lexer) readComment() {
+	_ =  l.readWhen(func(b byte) bool {
+		return b != 0 && b != '\n'
+	})
+}
+
 func (l *Lexer) NextToken() *token.Token {
 
 	_ = l.readWhitespace()
@@ -87,7 +93,13 @@ func (l *Lexer) NextToken() *token.Token {
 	case '*':
 		tok = token.New(token.Asterisk, l.ch)
 	case '/':
-		tok = token.New(token.Slash, l.ch)
+		if l.peekChar() == '/' {
+			l.readChar()
+			l.readComment()
+			return l.NextToken()
+		} else {
+			tok = token.New(token.Slash, l.ch)
+		}
 	case '<':
 		tok = token.New(token.LT, l.ch)
 	case '>':
@@ -108,6 +120,8 @@ func (l *Lexer) NextToken() *token.Token {
 		tok = token.New(token.LBracket, l.ch)
 	case ']':
 		tok = token.New(token.RBracket, l.ch)
+	case '.':
+		tok = token.New(token.Dot, l.ch)
 	case '"':
 		l.readChar()
 		tok = token.NewFromString(token.String, l.readString())
