@@ -398,6 +398,31 @@ func (p *Parser) parseListExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseHashMapExpression() ast.Expression {
+	expression := &ast.MapExpression{Token: p.current}
+	expression.Entries = map[ast.Expression]ast.Expression{}
+
+	p.nextToken()
+	for !p.current.IsType(token.RBrace) && !p.next.IsType(token.EOF) {
+		key := p.parseExpression(Lowest)
+		if key != nil {
+			if !p.expectNext(token.Colon) {
+				return nil
+			}
+			p.nextToken()
+			value := p.parseExpression(Lowest)
+			if value != nil {
+				expression.Entries[key] = value
+			}
+		}
+		if p.next.IsType(token.Comma) {
+			p.nextToken()
+		}
+		p.nextToken()
+	}
+	return expression
+}
+
 func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	expression := &ast.IndexExpression{Token: p.current, Left: left}
 
@@ -410,6 +435,7 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 
 	return expression
 }
+
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
@@ -428,6 +454,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.If, p.parseIfExpression)
 	p.registerPrefix(token.Function, p.parseFunctionLiteralExpression)
 	p.registerPrefix(token.LBracket, p.parseListExpression)
+	p.registerPrefix(token.LBrace, p.parseHashMapExpression)
 
 	p.infixFuncs = make(map[token.Type]infixFunc)
 	p.registerInfix(token.Plus, p.parseInfixExpression)

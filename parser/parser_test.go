@@ -422,6 +422,51 @@ func TestParser_List(t *testing.T) {
 	}
 }
 
+func TestParser_Map(t *testing.T) {
+	tests := []struct {
+		input string
+		expected map[interface{}]interface{}
+	}{
+		{`{1: 1}`, map[interface{}]interface{}{int64(1): int64(1)}},
+		{`{1: 2, 2: 3}`, map[interface{}]interface{}{int64(1): int64(2), int64(2): int64(3)}},
+	}
+
+	for _, subtest := range tests {
+		program := New(lexer.New(subtest.input)).ParseProgram()
+		expr := program.Statements[0].(*ast.ExpressionStatement)
+		entries := expr.Expression.(*ast.MapExpression).Entries
+		require.Equal(t, len(subtest.expected), len(entries))
+
+		mapping := map[interface{}]interface{}{}
+		for k, v := range entries {
+			var key interface{}
+			var value interface{}
+			switch obj := k.(type) {
+			case *ast.IntegerLiteral:
+				key = obj.Value
+			case *ast.Boolean:
+				key = obj.Value
+			case *ast.StringLiteral:
+				key = obj.Value
+			default:
+				require.FailNow(t, "failed", "unknown type %T", obj)
+			}
+			switch obj := v.(type) {
+			case *ast.IntegerLiteral:
+				value = obj.Value
+			case *ast.Boolean:
+				value = obj.Value
+			case *ast.StringLiteral:
+				value = obj.Value
+			default:
+				require.FailNow(t, "failed", "unknown type %T", obj)
+			}
+			mapping[key] = value
+		}
+		require.Equal(t, subtest.expected, mapping)
+	}
+}
+
 func checkErrors(t *testing.T, errors []string) {
 	for _, err := range errors {
 		fmt.Println(fmt.Errorf(err))

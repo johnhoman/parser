@@ -305,3 +305,34 @@ func (ie *IndexExpression) String() string {
 	out.WriteByte(')')
 	return out.String()
 }
+
+type mapEntry struct {
+	key string
+	value string
+}
+
+type MapExpression struct {
+	Token *token.Token
+	Entries map[Expression]Expression
+}
+
+func (exp *MapExpression) expressionNode() {}
+func (exp *MapExpression) TokenLiteral() string { return exp.Token.Literal }
+func (exp *MapExpression) String() string {
+	out := new(bytes.Buffer)
+
+	pairs := make([]mapEntry, 0, len(exp.Entries))
+	for key, value := range exp.Entries {
+		pairs = append(pairs, mapEntry{key.String(), value.String()})
+	}
+
+	out.WriteByte('{')
+	for k, pair := range pairs {
+		out.WriteString(pair.key + ": " + pair.value)
+		if k < len(pairs) {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteByte('}')
+	return out.String()
+}
