@@ -268,10 +268,8 @@ func evalBlockStatements(statements []ast.Statement, env *object.Env) object.Obj
 }
 
 func isError(obj object.Object) bool {
-	if obj != nil {
-		if _, ok := obj.(*object.Error); ok {
-			return ok
-		}
+	if _, ok := obj.(*object.Error); ok {
+		return true
 	}
 	return false
 }
