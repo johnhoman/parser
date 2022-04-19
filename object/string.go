@@ -24,6 +24,17 @@ func (s *String) length() *Integer {
 }
 
 func (s *String) Len() Object { return s.length() }
+
+func (s *String) list() *List {
+	values := make([]Object, 0, len(s.Value))
+	for _, b := range s.Value {
+		values = append(values, &String{Value: string(b)})
+	}
+	return &List{Values: values}
+}
+
+func (s *String) List() Object { return s.list() }
+
 func (s *String) Type() Type  { return TypeString }
 
 func (s *String) Inspect() string {
