@@ -388,7 +388,7 @@ func TestParser_CallFunction(t *testing.T) {
 
 func TestParser_List(t *testing.T) {
 	tests := []struct {
-		input string
+		input    string
 		expected []interface{}
 	}{
 		{`[1]`, []interface{}{int64(1)}},
@@ -424,7 +424,7 @@ func TestParser_List(t *testing.T) {
 
 func TestParser_Map(t *testing.T) {
 	tests := []struct {
-		input string
+		input    string
 		expected map[interface{}]interface{}
 	}{
 		{`{1: 1}`, map[interface{}]interface{}{int64(1): int64(1)}},

@@ -61,7 +61,7 @@ func (l *Lexer) readWhitespace() string {
 }
 
 func (l *Lexer) readComment() {
-	_ =  l.readWhen(func(b byte) bool {
+	_ = l.readWhen(func(b byte) bool {
 		return b != 0 && b != '\n'
 	})
 }

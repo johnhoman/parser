@@ -35,7 +35,7 @@ func (s *String) list() *List {
 
 func (s *String) List() Object { return s.list() }
 
-func (s *String) Type() Type  { return TypeString }
+func (s *String) Type() Type { return TypeString }
 
 func (s *String) Inspect() string {
 	out := new(bytes.Buffer)

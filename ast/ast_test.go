@@ -56,7 +56,6 @@ func TestProgram_List(t *testing.T) {
 	require.Equal(t, `[1, 2, "10", true]`, program.String())
 }
 
-
 func TestProgram_IndexExpression(t *testing.T) {
 	program := Program{
 		Statements: []Statement{

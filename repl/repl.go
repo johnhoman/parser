@@ -43,7 +43,6 @@ func Start(in io.Reader, out io.Writer) {
 			_, _ = io.WriteString(out, "\n")
 		}
 	}
-
 }
 
 func printParserErrors(out io.Writer, errors []string) {

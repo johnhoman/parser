@@ -426,7 +426,7 @@ func (p *Parser) parseHashMapExpression() ast.Expression {
 func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	expression := &ast.IndexExpression{Token: p.current, Left: left}
 
-	p.nextToken()  // consume '['
+	p.nextToken() // consume '['
 	expression.Index = p.parseExpression(Lowest)
 
 	if !p.expectNext(token.RBracket) {
@@ -435,7 +435,6 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 
 	return expression
 }
-
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}

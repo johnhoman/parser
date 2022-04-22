@@ -28,10 +28,10 @@ const (
 	Colon     Type = ":"
 	Dot       Type = "."
 
-	LParen Type = "("
-	RParen Type = ")"
-	LBrace Type = "{"
-	RBrace Type = "}"
+	LParen   Type = "("
+	RParen   Type = ")"
+	LBrace   Type = "{"
+	RBrace   Type = "}"
 	LBracket Type = "["
 	RBracket Type = "]"
 

@@ -390,7 +390,6 @@ counter(0);
 	}
 }
 
-
 func TestEval_Builtins(t *testing.T) {
 	tests := []struct {
 		input    string

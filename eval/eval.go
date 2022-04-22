@@ -8,10 +8,10 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"len":  {Fn: object.BuiltinLen},
-	"add":  {Fn: object.BuiltinAdd},
-	"exit": {Fn: object.BuiltinExit},
-	"list": {Fn: object.BuiltinList},
+	"len":   {Fn: object.BuiltinLen},
+	"add":   {Fn: object.BuiltinAdd},
+	"exit":  {Fn: object.BuiltinExit},
+	"list":  {Fn: object.BuiltinList},
 	"print": {Fn: object.BuiltinPrintln},
 }
 
@@ -111,7 +111,9 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			}
 			// Need to remove the variables from the environment
 			out := Eval(fn.Body, functionEnv)
-			if rv, ok := out.(*object.ReturnValue); ok { return rv.Value }
+			if rv, ok := out.(*object.ReturnValue); ok {
+				return rv.Value
+			}
 			return out
 		default:
 			return &object.Error{Message: fmt.Sprintf("not a function %s", fn.Type())}
@@ -149,7 +151,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			typeString := strings.ToLower(items.Type().String())
 			return &object.Error{
 				ErrorType: "IndexError",
-				Message: fmt.Sprintf("%s index out of range", typeString),
+				Message:   fmt.Sprintf("%s index out of range", typeString),
 			}
 		}
 		switch ob := items.(type) {

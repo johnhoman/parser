@@ -288,11 +288,11 @@ func (sl *ListExpression) String() string {
 
 type IndexExpression struct {
 	Token *token.Token
-	Left Expression
+	Left  Expression
 	Index Expression
 }
 
-func (ie *IndexExpression) expressionNode() {}
+func (ie *IndexExpression) expressionNode()      {}
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
 	out := new(bytes.Buffer)
@@ -307,16 +307,16 @@ func (ie *IndexExpression) String() string {
 }
 
 type mapEntry struct {
-	key string
+	key   string
 	value string
 }
 
 type MapExpression struct {
-	Token *token.Token
+	Token   *token.Token
 	Entries map[Expression]Expression
 }
 
-func (exp *MapExpression) expressionNode() {}
+func (exp *MapExpression) expressionNode()      {}
 func (exp *MapExpression) TokenLiteral() string { return exp.Token.Literal }
 func (exp *MapExpression) String() string {
 	out := new(bytes.Buffer)
