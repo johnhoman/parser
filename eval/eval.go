@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-var (
-	NullSingleton = &object.Null{}
-)
-
 var builtins = map[string]*object.Builtin{
 	"len":  {Fn: object.BuiltinLen},
 	"add":  {Fn: object.BuiltinAdd},
@@ -36,7 +32,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			if n.Alternative != nil {
 				return Eval(n.Alternative, env)
 			}
-			return NullSingleton
+			return object.NullValue
 		}
 	case *ast.InfixExpression:
 		left := Eval(n.Left, env)
@@ -73,7 +69,7 @@ func Eval(node ast.Node, env *object.Env) object.Object {
 			return obj
 		}
 		env.Set(n.Name.Value, obj)
-		return obj
+		return object.NullValue
 	case *ast.Identifier:
 		if obj, ok := env.Get(n.Value); ok {
 			return obj
@@ -176,7 +172,7 @@ func evalBangOperator(right object.Object) object.Object {
 	case object.False:
 		return object.True
 	default:
-		return NullSingleton
+		return object.NullValue
 	}
 }
 
@@ -226,7 +222,7 @@ func evalInfixIntegerExpression(
 	case ">":
 		binaryFunc = object.Gt
 	default:
-		return NullSingleton
+		return object.NullValue
 	}
 	if binaryFunc != nil {
 		val := binaryFunc(left, right)
@@ -266,7 +262,7 @@ func evalBlockStatements(statements []ast.Statement, env *object.Env) object.Obj
 		}
 	}
 	// explicitly return value or null
-	return NullSingleton
+	return object.NullValue
 }
 
 func isError(obj object.Object) bool {

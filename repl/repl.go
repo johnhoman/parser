@@ -38,7 +38,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 		obj := eval.Eval(program, env)
-		if obj != nil {
+		if obj != nil && obj.Type() != object.TypeNull {
 			_, _ = io.WriteString(out, obj.Inspect())
 			_, _ = io.WriteString(out, "\n")
 		}
